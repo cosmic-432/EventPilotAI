@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EventPilot AI — Intelligent Event Planning & Budget Optimization</title>
+    <meta name="description" content="Intelligent event planning and budget optimization platform with precision budget calculations, date-aware timelines, vendor checklists, and GenAI recommendations." />
+    <meta property="og:title" content="EventPilot AI — Intelligent Event Planning & Budget Optimization" />
+    <meta property="og:description" content="Intelligent event planning and budget optimization platform with precision budget calculations, date-aware timelines, vendor checklists, and GenAI recommendations." />
+    <meta name="theme-color" content="#0B0B10" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      // Suppress Vite HMR WebSocket errors in development preview per environment guidelines
+      window.addEventListener('error', function(event) {
+        if (
+          event.message &&
+          (event.message.includes('WebSocket') ||
+           event.message.includes('@vite/client') ||
+           event.message.includes('createWebSocketModuleRunnerTransport'))
+        ) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      });
+      window.addEventListener('unhandledrejection', function(event) {
+        var reason = String(event.reason || '');
+        if (
+          reason.includes('WebSocket') ||
+          reason.includes('@vite/client') ||
+          reason.includes('createWebSocketModuleRunnerTransport')
+        ) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

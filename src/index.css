@@ -1,0 +1,140 @@
+@import "tailwindcss";
+
+@theme {
+  --color-midnight: #0B0B10;
+  --color-surface: #15151D;
+  --color-surface-elevated: #1D1D27;
+  --color-surface-hover: #252533;
+  --color-border-subtle: #30303A;
+  --color-border-light: #424252;
+  
+  --color-champagne: #C8A96E;
+  --color-champagne-light: #DFC490;
+  --color-champagne-hover: #B89658;
+  --color-champagne-dark: #8E7341;
+  --color-champagne-subtle: rgba(200, 169, 110, 0.12);
+  --color-champagne-glow: rgba(200, 169, 110, 0.25);
+
+  --color-text-primary: #F3EBDD;
+  --color-text-secondary: #A5A3AD;
+  --color-text-muted: #72707B;
+
+  --color-status-success: #829879;
+  --color-status-success-bg: rgba(130, 152, 121, 0.14);
+  --color-status-warning: #E4B66A;
+  --color-status-warning-bg: rgba(228, 182, 106, 0.14);
+  --color-status-error: #E47777;
+  --color-status-error-bg: rgba(228, 119, 119, 0.14);
+}
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Semantic Design Tokens: Midnight Champagne */
+    --bg-main: #0B0B10;
+    --bg-surface: #15151D;
+    --bg-secondary: #1D1D27;
+    --bg-hover: #252533;
+    --border-divider: #30303A;
+    --border-highlight: #424252;
+
+    --accent-champagne: #C8A96E;
+    --accent-champagne-light: #DFC490;
+    --accent-champagne-hover: #B89658;
+    --accent-champagne-subtle: rgba(200, 169, 110, 0.12);
+
+    --text-primary: #F3EBDD;
+    --text-secondary: #A5A3AD;
+    --text-muted: #72707B;
+
+    --color-success: #829879;
+    --color-success-bg: rgba(130, 152, 121, 0.14);
+    --color-warning: #E4B66A;
+    --color-warning-bg: rgba(228, 182, 106, 0.14);
+    --color-error: #E47777;
+    --color-error-bg: rgba(228, 119, 119, 0.14);
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    background-color: var(--bg-main);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Clearly visible champagne-colored focus outline across all interactive elements */
+:focus-visible {
+  outline: 2px solid #C8A96E !important;
+  outline-offset: 2px !important;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid #C8A96E !important;
+  outline-offset: 2px !important;
+}
+
+/* Custom scrollbars for dark theme surfaces */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0B10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #30303A;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #424252;
+}
+
+/* Tabular figures for reliable financial and numeric column alignment */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Print layout optimizations */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  
+  .print-card {
+    border: 1px solid #30303A !important;
+    box-shadow: none !important;
+    margin-bottom: 1rem !important;
+    page-break-inside: avoid;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

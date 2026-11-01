@@ -1,0 +1,744 @@
+# PROMPT WARS CHALLENGE 5 — MASTER BUILD PROMPT
+## Project: EventPilot AI — Intelligent Event Planning & Budget Optimization Platform
+
+### ROLE AND MISSION
+
+Act as a principal full-stack engineer, senior product designer, AI systems architect, application security specialist, QA automation engineer, and accessibility expert.
+
+Build **EventPilot AI**, a production-minded, GenAI-powered event-planning assistant that enables users to plan weddings, birthdays, anniversaries, college festivals, fundraisers, and community events from a single intelligent workspace.
+
+The objective is not to produce a static demo or a visually impressive mockup. Build a functional, reliable, secure, responsive, accessible, and deployable application that solves real event-planning problems.
+
+I am building and deploying this project using **Google AI Studio**. Use the supported Gemini integration and the current capabilities of the development environment. Make technically sound implementation choices, verify compatibility, and avoid dependencies or infrastructure that cannot reasonably be deployed in the target environment.
+
+Optimize the implementation for these six evaluation dimensions:
+
+1. Code quality
+2. Security
+3. Efficiency and performance
+4. Testing and reliability
+5. Accessibility
+6. Problem-solving alignment
+
+Target a standard of excellence in every category. Do not claim a score, successful test, or completed deployment unless it has actually been verified.
+
+---
+
+# 1. PRODUCT VISION AND CORE VALUE
+
+EventPilot AI transforms an event idea into an actionable, budget-aware execution plan.
+
+A user should be able to enter a natural-language request such as:
+
+"I want to organize a wedding for 250 guests in Pune, with a budget of ₹8,00,000, in 60 days. I prefer an elegant traditional theme, vegetarian catering, and an outdoor venue if possible."
+
+The application should intelligently generate:
+
+- A personalized event plan.
+- A realistic, editable budget breakdown.
+- A date-aware preparation timeline.
+- A categorized vendor and booking checklist.
+- Guest, catering, venue, decoration, and logistics estimates.
+- A personalized theme and idea board.
+- Risk alerts, contingency recommendations, and cost-saving alternatives.
+- An interactive workspace where users can update, regenerate, and track their plans.
+
+The primary value proposition is:
+
+**From idea to organized event — with a clear budget, actionable timeline, and AI-assisted decisions.**
+
+Every major feature must contribute to this objective. Avoid unrelated features, decorative dashboards that do not function, and unnecessary complexity.
+
+# 2. TARGET USERS AND USE CASES
+
+Support these event categories:
+
+- Weddings and engagement ceremonies.
+- Birthdays and anniversaries.
+- College festivals and student events.
+- Community gatherings and cultural programs.
+- Fundraisers and charity events.
+- Corporate and professional events.
+- Custom events defined by the user.
+
+Support beginners who have never planned an event as well as experienced organizers managing complex events.
+
+The interface should adapt terminology, recommendations, task categories, and default planning templates to the selected event type.
+
+Do not hardcode one event category into the underlying planning engine.
+
+# 3. REQUIRED USER JOURNEY
+
+Implement this complete end-to-end workflow.
+
+### Step 1: Create an event
+
+Provide a guided form with:
+
+- Event name and category.
+- Event date or date range.
+- Location and venue status.
+- Estimated guest count.
+- Total budget and currency.
+- Preferred event style or theme.
+- Dietary requirements.
+- Accessibility and mobility requirements.
+- Indoor, outdoor, or flexible venue preference.
+- Priorities and non-negotiable requirements.
+- Additional preferences in natural language.
+
+Use sensible defaults, inline validation, and progressive disclosure. Ask only for information that is needed at the current stage.
+
+Allow users to save a draft and continue later when persistence is available.
+
+### Step 2: Generate an intelligent plan
+
+Use Gemini to interpret the user's requirements and produce structured, validated planning data.
+
+Generate:
+
+1. An event overview.
+2. A budget allocation.
+3. A preparation timeline.
+4. A vendor checklist.
+5. A guest and logistics plan.
+6. Personalized themes and ideas.
+7. Risk and contingency recommendations.
+
+Every recommendation should reflect the event type, budget, date, guest count, location, and stated preferences.
+
+When information is missing, distinguish assumptions from confirmed details. Ask a focused follow-up question when a missing detail materially affects the result. Otherwise, use clearly labeled assumptions that users can edit.
+
+### Step 3: Review and customize
+
+Allow users to edit generated content without regenerating the entire plan.
+
+Users must be able to:
+
+- Add, edit, complete, delete, and reorder tasks.
+- Change budget allocations and estimated expenses.
+- Modify due dates and task priorities.
+- Add vendors and booking notes.
+- Mark bookings as pending, confirmed, or cancelled.
+- Update guest estimates and event preferences.
+- Regenerate an individual section using new constraints.
+- Undo or recover from accidental edits where practical.
+
+Show a clear distinction between AI-generated estimates and user-confirmed information.
+
+### Step 4: Monitor progress
+
+Provide a live planning dashboard containing:
+
+- Total budget.
+- Planned expenditure.
+- Actual expenditure.
+- Remaining budget.
+- Completed tasks and total tasks.
+- Upcoming deadlines.
+- Overdue tasks.
+- Vendor booking status.
+- Budget overrun warnings.
+- Important unresolved decisions.
+
+Every displayed metric must be derived from actual application state, not hardcoded sample values.
+
+### Step 5: Export and share
+
+Provide a useful print layout and downloadable event summary. Include the event overview, budget, timeline, tasks, vendor checklist, and outstanding risks.
+
+Use a reliable supported export method, such as CSV for tabular information and a print-friendly layout for the complete plan. If PDF generation is implemented, ensure it works and preserves readable formatting.
+
+Provide a shareable link only when a secure sharing mechanism is implemented. Do not simulate sharing functionality.
+
+# 4. GENAI ARCHITECTURE AND RELIABILITY
+
+Use Gemini through the supported Google AI Studio integration.
+
+Create a dedicated AI service layer instead of scattering model calls throughout UI components.
+
+The AI service must:
+
+- Use a configurable model identifier.
+- Keep credentials and privileged operations on the server.
+- Send only the minimum information needed for each generation request.
+- Use structured output with an explicit schema where supported.
+- Validate all model-generated data before it enters application state.
+- Handle malformed JSON, incomplete responses, refusals, and unexpected model output.
+- Apply sensible input and output size limits.
+- Provide timeouts, bounded retries, and graceful failure handling.
+- Prevent duplicate submissions from triggering unnecessary duplicate generations.
+- Display loading, success, empty, and error states.
+- Preserve existing user data when generation fails.
+
+Use a typed, versioned internal representation for event plans. A suitable conceptual schema is:
+
+EventPlan:
+- id
+- schemaVersion
+- eventDetails
+- assumptions
+- budget
+- timeline
+- tasks
+- vendors
+- guestPlan
+- ideas
+- risks
+- updatedAt
+
+Define and implement the nested schemas, field constraints, identifiers, allowed statuses, and validation rules. The structure above is a starting point, not permission to leave the data model incomplete.
+
+Do not trust the model to enforce business rules. Enforce those rules deterministically in application code.
+
+### Budget intelligence
+
+Implement actual budget calculations in code, not in the language model.
+
+For each budget item, support:
+
+- Category.
+- Description.
+- Estimated amount.
+- Actual amount.
+- Quantity and unit cost where applicable.
+- Priority.
+- Vendor association where applicable.
+- Payment or booking status.
+
+Calculate:
+
+Total estimated expenditure = sum of estimated budget items.
+
+Total actual expenditure = sum of recorded actual expenditures.
+
+Remaining budget = total budget − total estimated expenditure.
+
+Also calculate actual unspent budget separately, using total budget minus actual expenditure.
+
+Use integer minor currency units where appropriate to avoid floating-point rounding errors in financial calculations. For Indian rupees, account for paise when storing monetary amounts and format output using the Indian numbering convention.
+
+Validate that amounts are finite, nonnegative, and within sensible limits.
+
+If allocations exceed the budget, show the amount and percentage of the overrun and offer specific cost-saving alternatives. Do not silently change the user's budget.
+
+Support an editable contingency reserve. Clearly distinguish reserved funds from committed expenditure so totals are not double-counted.
+
+### Timeline intelligence
+
+Generate task due dates relative to the event date.
+
+Each task should include:
+
+- A stable ID.
+- A title and actionable description.
+- A category.
+- A due date.
+- A priority.
+- A status.
+- Dependencies, when relevant.
+- Optional notes.
+
+Validate dates, dependencies, and task ordering. Flag impossible schedules and overdue tasks. Handle time zones and date-only values consistently.
+
+Do not invent a fixed preparation schedule that ignores the actual event date.
+
+### Vendor intelligence
+
+Generate vendor categories and selection criteria relevant to the event.
+
+For each vendor, support:
+
+- Vendor type.
+- Contact information entered by the user.
+- Estimated cost.
+- Booking status.
+- Quotation status.
+- Notes.
+- Required booking date.
+
+AI-generated vendor suggestions are not verified businesses. Never invent real vendor availability, prices, ratings, contact details, or booking confirmations.
+
+If live vendor search is unavailable, explicitly label recommendations as vendor-selection guidance rather than real-world listings.
+
+### Personalized ideas
+
+Generate useful, feasible suggestions based on:
+
+- Event type.
+- Budget.
+- Number of attendees.
+- Location and climate considerations when known.
+- Cultural preferences voluntarily provided by the user.
+- Accessibility requirements.
+- Sustainability preferences.
+- Theme and atmosphere.
+
+Offer a small number of high-value suggestions, explain why each fits, and provide estimated cost impact when defensible.
+
+Label uncertain estimates and never present generated prices as verified quotations.
+
+# 5. USER INTERFACE AND DESIGN SYSTEM
+
+Build a polished, premium SaaS experience that is visually distinctive but easy to use.
+
+### Visual direction
+
+Use a modern event-planning aesthetic with:
+
+- A clean, uncluttered layout.
+- Refined typography and consistent spacing.
+- A restrained color palette.
+- Clear hierarchy and readable data visualizations.
+- Subtle transitions that respect reduced-motion settings.
+- Consistent cards, forms, tables, dialogs, and notifications.
+- Thoughtful empty states and actionable error messages.
+
+Avoid excessive gradients, unnecessary glassmorphism, distracting animations, and generic AI-generated dashboard layouts.
+
+The product should feel like a real planning tool rather than a landing page with a few nonfunctional cards.
+
+### Required screens
+
+1. Welcome page and event creation.
+2. Event setup wizard.
+3. Main event dashboard.
+4. Budget planner.
+5. Timeline and task manager.
+6. Vendor checklist.
+7. Ideas and theme explorer.
+8. Event settings and preferences.
+9. Export and print view.
+10. Clear loading, empty, error, and recovery states.
+
+Use a responsive sidebar or equivalent navigation on larger screens and a compact, touch-friendly navigation pattern on mobile.
+
+On smaller screens, make complex budget tables usable through responsive cards or controlled horizontal scrolling.
+
+### Essential interactions
+
+All visible controls must have real behavior.
+
+Every button, menu, filter, tab, form, dialog, and task action must either work or be clearly identified as unavailable. Do not include decorative controls that imply functionality.
+
+Use confirmation dialogs for destructive operations, and provide clear feedback after user actions.
+
+Maintain consistent navigation, predictable state updates, and sensible keyboard focus behavior.
+
+# 6. CODE QUALITY AND SOFTWARE ARCHITECTURE
+
+Use the most suitable stable, supported stack for Google AI Studio's current full-stack build and deployment environment. Prefer TypeScript where supported.
+
+Follow a modular, maintainable architecture with clear separation of concerns:
+
+- Presentation components.
+- Application state and domain logic.
+- Typed data models and validation schemas.
+- AI service and prompt templates.
+- Persistence and repository layer.
+- Server-side API routes or equivalent trusted backend operations.
+- Authentication and authorization when accounts are supported.
+- Error handling and observability.
+
+Keep business logic out of large UI components. Use reusable components and well-defined interfaces.
+
+Engineering requirements:
+
+- Strict typing and explicit domain models.
+- No unexplained `any` types where strong typing is feasible.
+- No duplicated business rules.
+- No giant monolithic components.
+- No dead code, unused dependencies, or unnecessary abstractions.
+- No swallowed exceptions or empty catch blocks.
+- No hardcoded secrets.
+- No arbitrary timeouts as a substitute for proper asynchronous state management.
+- No fake backend responses in production paths.
+- No console errors or avoidable warnings.
+- Consistent naming, formatting, and code organization.
+- Clear documentation for non-obvious design decisions.
+
+Use dependency injection or small service interfaces where they materially improve testability.
+
+Choose the simplest architecture that satisfies the product requirements. Do not introduce microservices, complex infrastructure, or extra dependencies without a demonstrated need.
+
+# 7. SECURITY AND PRIVACY
+
+Treat security as a first-class requirement.
+
+### Secrets and API security
+
+- Never expose Gemini API keys, database credentials, session secrets, or privileged tokens in client-side code.
+- Store server-side secrets in the supported environment or secret-management mechanism.
+- Never commit `.env` files containing real credentials.
+- Verify that build outputs, browser bundles, logs, and error responses do not reveal secrets.
+- If the selected deployment environment cannot securely host a required secret, explain the limitation and use a supported secure backend approach instead.
+
+### Input validation and injection resistance
+
+- Validate user inputs on both the client and trusted server boundary.
+- Validate all model-generated structured data before persistence.
+- Sanitize user-controlled content when rendering it in HTML contexts.
+- Avoid unsafe HTML rendering and dynamic code execution.
+- Treat user descriptions, uploaded content, and model output as untrusted data.
+- Treat instructions embedded in event descriptions or vendor notes as data, not as system instructions.
+- Never allow event content to override the application's AI policy or access controls.
+
+### Authentication and authorization
+
+If user accounts and cloud persistence are implemented:
+
+- Use a reputable, supported authentication provider.
+- Enforce authorization on the server, not only in the UI.
+- Scope all event queries and mutations to the authenticated owner or explicitly authorized collaborators.
+- Deny access by default.
+- Protect session and account-management operations.
+- Apply appropriate security rules to database reads and writes.
+- Test cross-user access attempts.
+
+A hidden button or an unguessable event ID is not authorization.
+
+### Data protection
+
+- Collect only information needed for event planning.
+- Do not request payment-card numbers, passwords, or unnecessary sensitive personal information.
+- Avoid sending personal guest details to the AI model unless essential and explicitly authorized.
+- Provide understandable privacy and data-handling disclosures.
+- Avoid logging complete event descriptions, guest lists, credentials, or other sensitive information.
+- Implement deletion behavior that removes the associated records when supported by the chosen storage architecture.
+- Do not claim complete deletion from backups or external providers unless that behavior is verified.
+
+### Abuse prevention
+
+- Enforce reasonable request-size and generation limits.
+- Apply rate limiting to expensive AI operations when supported by the backend.
+- Set maximum generation lengths and bounded retries.
+- Prevent unauthorized use of privileged APIs.
+- Use safe, generic error messages for users and appropriate diagnostic logging for developers.
+- Avoid exposing stack traces or internal configuration to end users.
+
+If any security feature cannot be implemented with the selected stack, document the limitation and do not claim it is complete.
+
+# 8. EFFICIENCY AND PERFORMANCE
+
+Build for responsiveness without sacrificing correctness.
+
+- Lazy-load heavy screens or optional modules when appropriate.
+- Avoid unnecessary component re-renders.
+- Avoid repeated network requests caused by rendering or effect loops.
+- Debounce search and text filtering when needed.
+- Cache only data that can safely be cached and invalidate it correctly.
+- Paginate or progressively load large lists.
+- Use optimistic updates only when rollback is supported.
+- Avoid regenerating the entire event plan after a small edit.
+- Keep AI generation outside critical rendering paths.
+- Cancel obsolete requests where supported.
+- Provide meaningful progress feedback during longer operations.
+- Avoid excessive polling.
+- Minimize bundle size and unnecessary third-party libraries.
+- Keep dashboard calculations efficient and consistent with the source data.
+
+Measure performance where tooling permits. Report actual measurements instead of inventing latency or Lighthouse scores.
+
+# 9. ACCESSIBILITY
+
+Target WCAG 2.2 Level AA wherever applicable.
+
+Implement and verify:
+
+- Semantic HTML and appropriate landmarks.
+- A logical heading hierarchy.
+- Keyboard-accessible navigation and controls.
+- Visible focus indicators.
+- Properly associated labels and form instructions.
+- Accessible names for icon-only controls.
+- Sufficient text and interface contrast.
+- Error messages that identify the affected field and explain correction.
+- Screen-reader announcements for meaningful status changes.
+- Dialog focus management and focus restoration.
+- Accessible charts with text summaries or tabular alternatives.
+- Information that does not rely on color alone.
+- Touch targets that are comfortably usable.
+- Zoom and responsive reflow without loss of essential functionality.
+- Reduced-motion support.
+
+Do not rely exclusively on placeholder text for labels. Do not remove keyboard outlines without a suitable replacement.
+
+Use automated accessibility tools and manual keyboard checks. Treat automated accessibility results as necessary but insufficient evidence of conformance.
+
+# 10. TESTING AND QUALITY ASSURANCE
+
+Create a testing strategy before finalizing the implementation.
+
+### Unit tests
+
+Test domain logic independently, including:
+
+- Budget aggregation.
+- Currency rounding and formatting.
+- Budget-overrun calculations.
+- Contingency reserve handling.
+- Timeline generation and date validation.
+- Task completion calculations.
+- Dependency validation.
+- Vendor status transitions.
+- Event-plan schema validation.
+- Input boundary cases.
+- Malformed AI output handling.
+
+Use deterministic test data and avoid relying on live Gemini responses for core business-logic tests.
+
+### Integration tests
+
+Test:
+
+- Event creation and editing.
+- AI service request validation.
+- Structured AI response parsing.
+- Persistence and recovery.
+- API error handling.
+- Authentication and authorization.
+- Data ownership and cross-user access denial.
+- Duplicate submissions.
+- Budget updates reflected throughout the dashboard.
+- Task and vendor changes reflected across all relevant screens.
+
+Mock external services only at appropriate test boundaries. Keep the test configuration clearly separated from production configuration.
+
+### End-to-end tests
+
+Verify the main journey:
+
+1. Create an event.
+2. Enter a budget, guest count, date, and preferences.
+3. Generate an event plan.
+4. Review and edit budget items.
+5. Complete a task.
+6. Update a vendor's booking status.
+7. Confirm that dashboard metrics update.
+8. Reload and verify persistence when enabled.
+9. Export or print the plan.
+10. Verify graceful behavior when AI generation fails.
+
+Also test empty states, invalid forms, mobile navigation, keyboard navigation, and destructive-action confirmations.
+
+### Security tests
+
+Include tests for:
+
+- Unauthorized access.
+- Cross-user data access.
+- Invalid or unexpected payloads.
+- Oversized inputs.
+- Script injection attempts.
+- Malformed model output.
+- Rate-limit handling where implemented.
+- Secret exposure in client bundles and error messages.
+
+Do not describe an application as penetration-tested merely because unit tests pass.
+
+### Test execution rules
+
+Run the tests that are supported by the environment.
+
+Fix implementation failures rather than weakening assertions to make tests pass.
+
+Do not fabricate test output, coverage, browser compatibility, deployment success, or security audit results.
+
+If a test cannot run, identify the blocker and provide the exact remaining verification steps.
+
+Report test counts, failures, and coverage only from actual tool output.
+
+# 11. ERROR HANDLING AND EDGE CASES
+
+The application must handle:
+
+- Missing or contradictory event details.
+- Zero guests or invalid guest counts.
+- Zero, negative, or extremely large budgets.
+- Budgets smaller than realistic minimum expenses.
+- Event dates in the past.
+- Impossible task deadlines.
+- Conflicting task dependencies.
+- Duplicate or missing identifiers.
+- Malformed or incomplete AI responses.
+- Gemini quota exhaustion or service unavailability.
+- Network disconnection.
+- Failed database writes.
+- Concurrent edits where relevant.
+- Empty task and vendor lists.
+- Very long event descriptions.
+- Invalid currency or date inputs.
+- Browser refresh during editing.
+- Failed exports.
+- Partial or stale cached data.
+
+Handle each case deliberately. Explain the problem in plain language and offer a recovery action whenever possible.
+
+Do not silently discard valid user edits or replace a saved plan with a failed generation.
+
+# 12. PERSISTENCE AND DEPLOYMENT
+
+Choose a persistence strategy that matches the deployment environment.
+
+If the environment supports a suitable database and secure server-side integration, implement durable persistence with a documented data model and access rules.
+
+If durable persistence is unavailable, implement a clearly labeled local-only mode with sensible browser-storage safeguards. Do not imply that local data is synchronized across devices or protected by server-side authorization.
+
+Keep the data-access layer independent enough to support a future storage migration.
+
+Before deployment:
+
+- Verify the supported build command.
+- Verify the required environment variables.
+- Confirm the application starts without missing dependencies.
+- Check production build errors.
+- Confirm that server-only secrets are not exposed.
+- Verify database configuration and security rules if applicable.
+- Verify all required routes.
+- Test the deployed application's primary workflow.
+- Document any remaining limitations.
+
+Use the actual deployment workflow supported by Google AI Studio and its available deployment integrations. Do not assume a particular hosting target is supported without checking.
+
+Never report a successful production deployment until a real deployment result has confirmed it.
+
+# 13. REQUIRED DELIVERABLES
+
+Produce a complete, working application and the following supporting artifacts where the environment permits:
+
+1. Functional application source code.
+2. Clear project and directory structure.
+3. A README with setup and deployment instructions.
+4. Environment-variable documentation using placeholders, never real secrets.
+5. Typed domain models and validation schemas.
+6. AI prompt templates and response-validation logic.
+7. A documented data model and access-control approach.
+8. Automated unit, integration, and end-to-end tests.
+9. Security and accessibility verification notes.
+10. A list of completed features and remaining limitations.
+11. A concise architecture explanation.
+12. A final verification report based on actual execution results.
+
+Do not substitute a project plan, pseudocode, screenshots, or an attractive landing page for the implementation.
+
+# 14. EXECUTION STRATEGY
+
+Work through these phases in order.
+
+### Phase A — Inspect and plan
+
+Inspect the existing project, available framework, dependencies, execution environment, Gemini integration, and deployment options.
+
+Identify technical constraints before choosing the architecture.
+
+Create a concise implementation plan and requirements-to-test mapping. Then begin implementation rather than stopping at the plan.
+
+### Phase B — Build the foundation
+
+Implement the project structure, domain types, validation, application state, error handling, and persistence interface.
+
+Establish consistent design tokens and reusable interface components.
+
+### Phase C — Implement the core product
+
+Build event creation, structured AI planning, budget calculations, timeline management, vendor checklists, ideas, and the dashboard.
+
+Ensure that every screen is connected to real application state.
+
+### Phase D — Harden the application
+
+Implement and verify authorization, validation, secret management, failure handling, accessibility, responsive behavior, and performance improvements.
+
+Do not postpone all quality work until after the UI is finished.
+
+### Phase E — Test and repair
+
+Run available checks, tests, builds, and accessibility audits.
+
+Inspect failures, identify root causes, fix the underlying problems, and rerun the relevant checks.
+
+### Phase F — Deploy and verify
+
+Deploy using the supported workflow when available.
+
+Test the deployed application and document what was actually verified.
+
+If the environment cannot perform a particular step, explain precisely what remains to be done.
+
+# 15. FINAL ACCEPTANCE CRITERIA
+
+Use the following as release gates, not as self-awarded scores.
+
+**Code quality**
+- Clear modular architecture.
+- Strong typing and validated data contracts.
+- No known critical build or runtime errors.
+- Business logic is independently testable.
+- No unnecessary complexity or dead functionality.
+
+**Security**
+- No exposed privileged credentials.
+- Server-side authorization for protected resources.
+- Correct data ownership enforcement.
+- Validation of untrusted inputs and AI outputs.
+- Safe failure handling and documented privacy boundaries.
+
+**Efficiency**
+- No unnecessary full-plan regeneration.
+- No avoidable repeated requests or render loops.
+- Responsive loading and interaction states.
+- Measured performance findings where available.
+
+**Testing**
+- Meaningful unit, integration, and end-to-end coverage.
+- Critical financial and authorization logic tested.
+- No known failing required tests.
+- Actual test results documented.
+
+**Accessibility**
+- Semantic structure and keyboard operability.
+- Visible focus and understandable errors.
+- Appropriate contrast and screen-reader support.
+- Automated checks plus manual verification.
+
+**Problem-solving alignment**
+- Complete event-planning workflow.
+- Budget calculations verified independently of the AI.
+- Actionable, date-aware tasks.
+- Personalized and editable recommendations.
+- Honest handling of uncertainty and real-world vendor information.
+- Reliable persistence or clearly disclosed local-only behavior.
+
+Do not mark a criterion as complete solely because the corresponding code exists. Verify that the feature works.
+
+# 16. NON-NEGOTIABLE RULES
+
+1. Build a functional product, not a mockup.
+2. Prioritize correctness and user value over feature count.
+3. Never fabricate real-world data, test results, or deployment success.
+4. Never expose API keys or bypass access controls.
+5. Never trust AI output without validation.
+6. Never allow AI-generated financial estimates to masquerade as verified prices.
+7. Never sacrifice accessibility for visual design.
+8. Never weaken security to make a demo easier.
+9. Preserve user data during failures and partial updates.
+10. Avoid unnecessary dependencies, external services, and paid features.
+11. Do not stop after the first implementation if build errors or obvious defects remain.
+12. Do not silently omit a requirement; document genuine platform limitations.
+
+# 17. FINAL RESPONSE FORMAT
+
+After implementing and verifying the application, provide:
+
+- What was built.
+- Architecture and technology choices.
+- Core features completed.
+- Tests executed and their actual results.
+- Security and accessibility checks performed.
+- Build and deployment status.
+- Any known limitations or unfinished work.
+- Exact steps needed to run, test, and deploy the application.
+
+Clearly distinguish between implemented, tested, deployed, and not-yet-verified features.
+
+**Begin by inspecting the available Google AI Studio environment and existing project. Then implement EventPilot AI end to end, prioritizing the acceptance criteria above.**
