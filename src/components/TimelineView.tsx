@@ -31,9 +31,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   onUpdatePlan,
   onOpenRegenerate,
 }) => {
-  const scheduleValidation = validateTaskSchedule(
-    plan.timeline.tasks,
-    plan.eventDetails.targetDate
+  const scheduleValidation = React.useMemo(
+    () => validateTaskSchedule(plan.timeline.tasks, plan.eventDetails.targetDate),
+    [plan.timeline.tasks, plan.eventDetails.targetDate]
   );
 
   const [statusFilter, setStatusFilter] = React.useState<string>('all');
@@ -137,16 +137,18 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
     });
   };
 
-  const filteredTasks = plan.timeline.tasks.filter((task) => {
-    if (statusFilter === 'todo' && task.status !== 'todo') return false;
-    if (statusFilter === 'in_progress' && task.status !== 'in_progress') return false;
-    if (statusFilter === 'completed' && task.status !== 'completed') return false;
-    if (statusFilter === 'overdue' && !scheduleValidation.overdueTaskIds.has(task.id)) return false;
+  const filteredTasks = React.useMemo(() => {
+    return plan.timeline.tasks.filter((task) => {
+      if (statusFilter === 'todo' && task.status !== 'todo') return false;
+      if (statusFilter === 'in_progress' && task.status !== 'in_progress') return false;
+      if (statusFilter === 'completed' && task.status !== 'completed') return false;
+      if (statusFilter === 'overdue' && !scheduleValidation.overdueTaskIds.has(task.id)) return false;
 
-    if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
+      if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
 
-    return true;
-  });
+      return true;
+    });
+  }, [plan.timeline.tasks, statusFilter, priorityFilter, scheduleValidation.overdueTaskIds]);
 
   return (
     <div className="space-y-6">

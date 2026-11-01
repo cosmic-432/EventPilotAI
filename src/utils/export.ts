@@ -16,25 +16,32 @@ function escapeCsvCell(val: unknown): string {
 }
 
 /**
- * Downloads a text or CSV file in the browser
+ * Downloads a text or CSV file safely in the browser (no-op in test/Node environments)
  */
 export function downloadFile(content: string, filename: string, mimeType = 'text/csv;charset=utf-8;') {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+  try {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.warn('File download bypassed in non-DOM environment:', err);
+  }
 }
 
 /**
  * Generates CSV for the Budget breakdown
  */
-export function exportBudgetToCsv(plan: EventPlan) {
+export function exportBudgetToCsv(plan: EventPlan): string {
   const currency = plan.budget.currency || 'INR';
   const headers = [
     'Category',
@@ -63,12 +70,13 @@ export function exportBudgetToCsv(plan: EventPlan) {
   const csvContent = [headers.map(escapeCsvCell).join(','), ...rows.map((r) => r.join(','))].join('\n');
   const filename = `${plan.eventDetails.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_budget.csv`;
   downloadFile(csvContent, filename);
+  return csvContent;
 }
 
 /**
  * Generates CSV for the Timeline tasks
  */
-export function exportTimelineToCsv(plan: EventPlan) {
+export function exportTimelineToCsv(plan: EventPlan): string {
   const headers = [
     'Task Title',
     'Category',
@@ -94,12 +102,13 @@ export function exportTimelineToCsv(plan: EventPlan) {
   const csvContent = [headers.map(escapeCsvCell).join(','), ...rows.map((r) => r.join(','))].join('\n');
   const filename = `${plan.eventDetails.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_timeline.csv`;
   downloadFile(csvContent, filename);
+  return csvContent;
 }
 
 /**
- * Generates CSV for Vendors
+ * Generates CSV for the Vendor items
  */
-export function exportVendorsToCsv(plan: EventPlan) {
+export function exportVendorsToCsv(plan: EventPlan): string {
   const currency = plan.budget.currency || 'INR';
   const headers = [
     'Vendor Service',
@@ -110,7 +119,7 @@ export function exportVendorsToCsv(plan: EventPlan) {
     'Contact Name',
     'Contact Phone',
     'Contact Email',
-    'Selection Guidance',
+    'Selection Criteria',
     'Notes',
   ];
 
@@ -130,6 +139,7 @@ export function exportVendorsToCsv(plan: EventPlan) {
   const csvContent = [headers.map(escapeCsvCell).join(','), ...rows.map((r) => r.join(','))].join('\n');
   const filename = `${plan.eventDetails.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}_vendors.csv`;
   downloadFile(csvContent, filename);
+  return csvContent;
 }
 
 /**
@@ -157,15 +167,15 @@ Contingency Reserve: ${plan.budget.contingencyPercentage}% (${formatCurrency(pla
 - Accessibility Provisions: ${details.accessibilityRequirements.join(', ') || 'Standard accessibility'}
 
 ## 2. Key Budget Allocations
-${plan.budget.items.map((i) => `- [${i.category}] ${i.description}: ${formatCurrency(i.estimatedAmountMinor, currency)} (${i.priority})`).join('\n')}
+${(plan.budget.items || []).slice(0, 8).map((b) => `- [${b.category}] ${b.description}: ${formatCurrency(b.estimatedAmountMinor, currency)} (${b.priority})`).join('\n')}
 
 ## 3. Preparation Timeline Highlights
-${plan.timeline.tasks.slice(0, 10).map((t) => `- Due ${t.dueDate} (${t.daysBeforeEvent} days before): ${t.title} [${t.status}]`).join('\n')}
+${(plan.timeline.tasks || []).slice(0, 8).map((t) => `- [${formatDisplayDate(t.dueDate)}] ${t.title} (${t.daysBeforeEvent} days before, ${t.priority})`).join('\n')}
 
 ## 4. Vendor Guidance & Deadlines
-${plan.vendors.items.map((v) => `- ${v.title} (${v.category}): Target by ${v.targetBookingDate} — Est. ${formatCurrency(v.estimatedCostMinor, currency)} [Status: ${v.bookingStatus}]`).join('\n')}
+${(plan.vendors.items || []).slice(0, 6).map((v) => `- ${v.title} (${v.category}): Target by ${formatDisplayDate(v.targetBookingDate)}`).join('\n')}
 
 ## 5. Identified Risks & Contingencies
-${plan.risks.items.map((r) => `- [${r.category.toUpperCase()}] ${r.title}: ${r.mitigation} (Contingency: ${r.contingencyAction})`).join('\n')}
+${(plan.risks.items || []).map((r) => `- [${r.category.toUpperCase()}] ${r.title}: ${r.mitigation}`).join('\n')}
 `;
 }

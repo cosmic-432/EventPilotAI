@@ -21,6 +21,15 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
   const [constraints, setConstraints] = React.useState('');
   const [errorMsg, setErrorMsg] = React.useState('');
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,22 +73,22 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1917]/40 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
     >
-      <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EEDCD7] space-y-4 animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between pb-3 border-b border-[#EEDCD7]">
+      <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4 animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between pb-3 border-b border-[#EADCE1]">
           <div>
-            <h3 className="font-editorial text-base font-bold text-[#1C1917] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#FF6F61]" />
+            <h3 className="font-editorial text-base font-bold text-[#392832] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#B85F80]" />
               Selective AI Section Re-Optimization
             </h3>
-            <p className="text-xs text-[#57534E] mt-0.5">
+            <p className="text-xs text-[#74616B] mt-0.5">
               Targeted updates without regenerating or erasing your other sections.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-[#57534E] hover:text-[#1C1917] hover:bg-[#FDE8E3] transition-colors"
+            className="p-1.5 rounded-xl text-[#74616B] hover:text-[#392832] hover:bg-[#F8E1E8] transition-colors"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -87,7 +96,7 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
         </div>
 
         {errorMsg && (
-          <div className="p-3 rounded-xl bg-[#FFF2EF] border border-[#B94D5A]/40 text-[#B94D5A] text-xs flex items-center gap-2">
+          <div className="p-3 rounded-xl bg-[#FFF0F3] border border-[#B94D5A]/40 text-[#B94D5A] text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-[#B94D5A] shrink-0" />
             <span>{errorMsg}</span>
           </div>
@@ -95,7 +104,7 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-[#57534E] mb-1">
+            <label className="block text-xs font-bold text-[#74616B] mb-1">
               Select Section to Re-Optimize
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -115,8 +124,8 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
                   }}
                   className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${
                     section === s.id
-                      ? 'bg-[#FF6F61] text-white font-bold border-[#FF6F61] shadow-xs'
-                      : 'bg-[#FCF8F7] text-[#57534E] border-[#EEDCD7] hover:bg-[#FDE8E3] hover:text-[#1C1917]'
+                      ? 'bg-[#B85F80] text-white font-bold border-[#B85F80] shadow-xs'
+                      : 'bg-[#FBF5F6] text-[#74616B] border-[#EADCE1] hover:bg-[#F8E1E8] hover:text-[#392832]'
                   }`}
                 >
                   {s.label}
@@ -126,7 +135,7 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#57534E] mb-1">
+            <label className="block text-xs font-bold text-[#74616B] mb-1">
               New Constraints or Guidance for Gemini AI
             </label>
             <textarea
@@ -134,7 +143,7 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
               value={constraints}
               onChange={(e) => setConstraints(e.target.value)}
               placeholder="e.g. Trim catering budget by 15%, add drone shoot line item..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] placeholder:text-[#8A827D] focus:outline-none focus:ring-2 focus:ring-[#FF6F61] resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] placeholder:text-[#998791] focus:outline-none focus:ring-2 focus:ring-[#B85F80] resize-none"
             />
           </div>
 
@@ -149,7 +158,7 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
                   key={i}
                   type="button"
                   onClick={() => setConstraints(sug)}
-                  className="w-full text-left p-2 rounded-xl bg-[#FCF8F7] hover:bg-[#FFF2EF] border border-[#EEDCD7] text-[11px] text-[#57534E] hover:text-[#1C1917] transition-colors"
+                  className="w-full text-left p-2 rounded-xl bg-[#FBF5F6] hover:bg-[#FFF0F3] border border-[#EADCE1] text-[11px] text-[#74616B] hover:text-[#392832] transition-colors"
                 >
                   💡 {sug}
                 </button>
@@ -157,19 +166,19 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#EEDCD7]">
+          <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#EADCE1]">
             <button
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-4 py-2 rounded-xl border border-[#EEDCD7] bg-white text-xs font-semibold text-[#57534E] hover:text-[#1C1917] hover:bg-[#FDE8E3]"
+              className="px-4 py-2 rounded-xl border border-[#EADCE1] bg-white text-xs font-semibold text-[#74616B] hover:text-[#392832] hover:bg-[#F8E1E8]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isLoading || !constraints.trim()}
-              className="px-5 py-2 rounded-xl bg-[#FF6F61] hover:bg-[#E05345] disabled:opacity-40 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 active:scale-[0.98]"
+              className="px-5 py-2 rounded-xl bg-[#B85F80] hover:bg-[#984665] disabled:opacity-40 text-white text-xs font-bold shadow-xs flex items-center gap-1.5 active:scale-[0.98]"
             >
               {isLoading ? (
                 <>

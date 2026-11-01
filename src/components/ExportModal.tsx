@@ -28,6 +28,15 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 }) => {
   const [downloadedState, setDownloadedState] = React.useState<Record<string, boolean>>({});
 
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const markDownloaded = (key: string) => {
@@ -64,21 +73,21 @@ export const ExportModal: React.FC<ExportModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="export-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1917]/40 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
     >
-      <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EEDCD7] space-y-5 animate-in fade-in zoom-in-95 duration-150">
-        <div className="flex items-center justify-between pb-3 border-b border-[#EEDCD7]">
+      <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="flex items-center justify-between pb-3 border-b border-[#EADCE1]">
           <div>
-            <h3 id="export-title" className="font-editorial text-lg font-bold text-[#1C1917] flex items-center gap-2">
-              <Download className="w-5 h-5 text-[#FF6F61]" /> Export Plan Data
+            <h3 id="export-title" className="font-editorial text-lg font-bold text-[#392832] flex items-center gap-2">
+              <Download className="w-5 h-5 text-[#B85F80]" /> Export Plan Data
             </h3>
-            <p className="text-xs text-[#57534E] mt-0.5">
+            <p className="text-xs text-[#74616B] mt-0.5">
               Download clean spreadsheet and document formats for your vendors and committee.
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-[#57534E] hover:text-[#1C1917] hover:bg-[#FDE8E3] transition-colors"
+            className="p-1.5 rounded-xl text-[#74616B] hover:text-[#392832] hover:bg-[#F8E1E8] transition-colors"
             aria-label="Close export modal"
           >
             <X className="w-5 h-5" />
@@ -87,21 +96,21 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         <div className="space-y-3">
           {/* Budget CSV */}
-          <div className="p-4 rounded-2xl bg-[#FCF8F7] border border-[#EEDCD7] flex items-center justify-between gap-3 hover:border-[#FF6F61]/50 transition-colors">
+          <div className="p-4 rounded-2xl bg-[#FBF5F6] border border-[#EADCE1] flex items-center justify-between gap-3 hover:border-[#B85F80]/50 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white text-[#B89555] border border-[#EEDCD7] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-white text-[#B89555] border border-[#EADCE1] flex items-center justify-center shrink-0 shadow-2xs">
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#1C1917]">Budget Breakdown (CSV)</h4>
-                <p className="text-[11px] text-[#57534E]">
+                <h4 className="text-xs font-bold text-[#392832]">Budget Breakdown (CSV)</h4>
+                <p className="text-[11px] text-[#74616B]">
                   {plan.budget.items.length} line items with estimated, actual, unit cost & payment status
                 </p>
               </div>
             </div>
             <button
               onClick={handleExportBudget}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FDE8E3] border border-[#EEDCD7] text-xs font-semibold text-[#1C1917] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#F8E1E8] border border-[#EADCE1] text-xs font-semibold text-[#392832] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
             >
               {downloadedState['budget'] ? (
                 <>
@@ -109,28 +118,28 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Download className="w-3.5 h-3.5 text-[#FF6F61]" /> CSV
+                  <Download className="w-3.5 h-3.5 text-[#B85F80]" /> CSV
                 </>
               )}
             </button>
           </div>
 
           {/* Timeline CSV */}
-          <div className="p-4 rounded-2xl bg-[#FCF8F7] border border-[#EEDCD7] flex items-center justify-between gap-3 hover:border-[#FF6F61]/50 transition-colors">
+          <div className="p-4 rounded-2xl bg-[#FBF5F6] border border-[#EADCE1] flex items-center justify-between gap-3 hover:border-[#B85F80]/50 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white text-[#FF6F61] border border-[#EEDCD7] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-white text-[#B85F80] border border-[#EADCE1] flex items-center justify-center shrink-0 shadow-2xs">
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#1C1917]">Preparation Timeline (CSV)</h4>
-                <p className="text-[11px] text-[#57534E]">
+                <h4 className="text-xs font-bold text-[#392832]">Preparation Timeline (CSV)</h4>
+                <p className="text-[11px] text-[#74616B]">
                   {plan.timeline.tasks.length} tasks with due dates, priorities, categories & notes
                 </p>
               </div>
             </div>
             <button
               onClick={handleExportTimeline}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FDE8E3] border border-[#EEDCD7] text-xs font-semibold text-[#1C1917] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#F8E1E8] border border-[#EADCE1] text-xs font-semibold text-[#392832] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
             >
               {downloadedState['timeline'] ? (
                 <>
@@ -138,28 +147,28 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Download className="w-3.5 h-3.5 text-[#FF6F61]" /> CSV
+                  <Download className="w-3.5 h-3.5 text-[#B85F80]" /> CSV
                 </>
               )}
             </button>
           </div>
 
           {/* Vendors CSV */}
-          <div className="p-4 rounded-2xl bg-[#FCF8F7] border border-[#EEDCD7] flex items-center justify-between gap-3 hover:border-[#FF6F61]/50 transition-colors">
+          <div className="p-4 rounded-2xl bg-[#FBF5F6] border border-[#EADCE1] flex items-center justify-between gap-3 hover:border-[#B85F80]/50 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white text-[#477D60] border border-[#EEDCD7] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-white text-[#477D60] border border-[#EADCE1] flex items-center justify-center shrink-0 shadow-2xs">
                 <FileSpreadsheet className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#1C1917]">Vendors & Quotations (CSV)</h4>
-                <p className="text-[11px] text-[#57534E]">
+                <h4 className="text-xs font-bold text-[#392832]">Vendors & Quotations (CSV)</h4>
+                <p className="text-[11px] text-[#74616B]">
                   {plan.vendors.items.length} category guides, lock dates, status & contacts
                 </p>
               </div>
             </div>
             <button
               onClick={handleExportVendors}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FDE8E3] border border-[#EEDCD7] text-xs font-semibold text-[#1C1917] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#F8E1E8] border border-[#EADCE1] text-xs font-semibold text-[#392832] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
             >
               {downloadedState['vendors'] ? (
                 <>
@@ -167,28 +176,28 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Download className="w-3.5 h-3.5 text-[#FF6F61]" /> CSV
+                  <Download className="w-3.5 h-3.5 text-[#B85F80]" /> CSV
                 </>
               )}
             </button>
           </div>
 
           {/* Executive Summary Markdown */}
-          <div className="p-4 rounded-2xl bg-[#FCF8F7] border border-[#EEDCD7] flex items-center justify-between gap-3 hover:border-[#FF6F61]/50 transition-colors">
+          <div className="p-4 rounded-2xl bg-[#FBF5F6] border border-[#EADCE1] flex items-center justify-between gap-3 hover:border-[#B85F80]/50 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-white text-[#B89555] border border-[#EEDCD7] flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-white text-[#B89555] border border-[#EADCE1] flex items-center justify-center shrink-0 shadow-2xs">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
-                <h4 className="text-xs font-bold text-[#1C1917]">Executive Master Brief (Markdown)</h4>
-                <p className="text-[11px] text-[#57534E]">
+                <h4 className="text-xs font-bold text-[#392832]">Executive Master Brief (Markdown)</h4>
+                <p className="text-[11px] text-[#74616B]">
                   Formatted comprehensive report suitable for documentation or sharing
                 </p>
               </div>
             </div>
             <button
               onClick={handleExportSummary}
-              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FDE8E3] border border-[#EEDCD7] text-xs font-semibold text-[#1C1917] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#F8E1E8] border border-[#EADCE1] text-xs font-semibold text-[#392832] shrink-0 transition-colors flex items-center gap-1.5 shadow-2xs"
             >
               {downloadedState['summary'] ? (
                 <>
@@ -196,7 +205,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Download className="w-3.5 h-3.5 text-[#FF6F61]" /> Markdown
+                  <Download className="w-3.5 h-3.5 text-[#B85F80]" /> Markdown
                 </>
               )}
             </button>
@@ -206,7 +215,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({
         <div className="pt-2 text-center">
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-[#FF6F61] hover:bg-[#E05345] text-white text-xs font-bold transition-colors active:scale-[0.98]"
+            className="w-full py-2.5 rounded-xl bg-[#B85F80] hover:bg-[#984665] text-white text-xs font-bold transition-colors active:scale-[0.98]"
           >
             Done
           </button>

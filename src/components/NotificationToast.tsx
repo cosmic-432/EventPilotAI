@@ -24,9 +24,9 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
       className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full px-4 pointer-events-none no-print"
     >
       {toasts.map((toast) => {
-        let border = 'border-[#EEDCD7]';
+        let border = 'border-[#EADCE1]';
         let Icon = Info;
-        let iconColor = 'text-[#FF6F61]';
+        let iconColor = 'text-[#B85F80]';
 
         if (toast.type === 'success') {
           border = 'border-emerald-200 bg-[#F0F7F4]/40';
@@ -37,13 +37,13 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
           Icon = AlertTriangle;
           iconColor = 'text-[#A87531]';
         } else if (toast.type === 'error') {
-          border = 'border-rose-200 bg-[#FFF2EF]/40';
+          border = 'border-rose-200 bg-[#FFF0F3]/40';
           Icon = AlertCircle;
           iconColor = 'text-[#B94D5A]';
         } else if (toast.type === 'info') {
-          border = 'border-[#FF9A8B] bg-[#FFF2EF]/40';
+          border = 'border-[#E9B9C9] bg-[#FFF0F3]/40';
           Icon = Info;
-          iconColor = 'text-[#FF6F61]';
+          iconColor = 'text-[#B85F80]';
         }
 
         return (
@@ -53,14 +53,14 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
           >
             <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${iconColor}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#1C1917]">{toast.title}</p>
+              <p className="text-sm font-semibold text-[#392832]">{toast.title}</p>
               {toast.message && (
-                <p className="text-xs text-[#57534E] mt-0.5 leading-relaxed">{toast.message}</p>
+                <p className="text-xs text-[#74616B] mt-0.5 leading-relaxed">{toast.message}</p>
               )}
             </div>
             <button
               onClick={() => onDismiss(toast.id)}
-              className="text-[#8A827D] hover:text-[#1C1917] p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]"
+              className="text-[#998791] hover:text-[#392832] p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B85F80]"
               aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />

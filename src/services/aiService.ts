@@ -22,6 +22,7 @@ export interface GeneratePlanRequestParams {
   accessibilityRequirements?: string[];
   priorities?: string[];
   naturalLanguagePrompt?: string;
+  signal?: AbortSignal;
 }
 
 export class AiService {
@@ -38,13 +39,32 @@ export class AiService {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
+    // Listen to optional external caller abort signal
+    if (params.signal) {
+      params.signal.addEventListener('abort', () => controller.abort());
+    }
+
     try {
       const response = await fetch('/api/plan/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(params),
+        body: JSON.stringify({
+          name: params.name,
+          category: params.category,
+          targetDate: params.targetDate,
+          location: params.location,
+          guestCount: params.guestCount,
+          totalBudget: params.totalBudget,
+          currency: params.currency,
+          venuePreference: params.venuePreference,
+          styleTheme: params.styleTheme,
+          dietaryRequirements: params.dietaryRequirements,
+          accessibilityRequirements: params.accessibilityRequirements,
+          priorities: params.priorities,
+          naturalLanguagePrompt: params.naturalLanguagePrompt,
+        }),
         signal: controller.signal,
       });
 
@@ -52,9 +72,13 @@ export class AiService {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.details || errorData.error || `Server responded with status ${response.status}`
-        );
+        const message =
+          errorData.error ||
+          (errorData.details && typeof errorData.details === 'object'
+            ? Object.values(errorData.details).join('; ')
+            : null) ||
+          `Server error (Status: ${response.status})`;
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -86,7 +110,7 @@ export class AiService {
     } catch (err: any) {
       clearTimeout(timeoutId);
       if (err.name === 'AbortError') {
-        throw new Error('AI request timed out after 60 seconds. Please check your connection and retry.');
+        throw new Error('Request was cancelled or timed out after 60 seconds.');
       }
       throw err;
     }
@@ -98,35 +122,54 @@ export class AiService {
   public async regenerateSection(
     sectionName: 'budget' | 'timeline' | 'vendors' | 'ideas' | 'risks',
     currentPlan: EventPlan,
-    newConstraints: string
+    newConstraints: string,
+    signal?: AbortSignal
   ): Promise<any> {
-    const response = await fetch('/api/plan/regenerate-section', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sectionName,
-        eventContext: {
-          name: currentPlan.eventDetails.name,
-          category: currentPlan.eventDetails.category,
-          location: currentPlan.eventDetails.location,
-          guestCount: currentPlan.eventDetails.guestCount,
-          totalBudget: currentPlan.budget.totalBudgetMinor / 100,
-          currency: currentPlan.budget.currency,
-          targetDate: currentPlan.eventDetails.targetDate,
-        },
-        newConstraints,
-      }),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 45000);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.details || errorData.error || 'Failed to regenerate section');
+    if (signal) {
+      signal.addEventListener('abort', () => controller.abort());
     }
 
-    const data = await response.json();
-    return data.sectionData;
+    try {
+      const response = await fetch('/api/plan/regenerate-section', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sectionName,
+          eventContext: {
+            name: currentPlan.eventDetails.name,
+            category: currentPlan.eventDetails.category,
+            location: currentPlan.eventDetails.location,
+            guestCount: currentPlan.eventDetails.guestCount,
+            totalBudget: currentPlan.budget.totalBudgetMinor / 100,
+            currency: currentPlan.budget.currency,
+            targetDate: currentPlan.eventDetails.targetDate,
+          },
+          newConstraints,
+        }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || errorData.details || 'Failed to regenerate section');
+      }
+
+      const data = await response.json();
+      return data.sectionData;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('Section regeneration request timed out or was cancelled.');
+      }
+      throw err;
+    }
   }
 }
 

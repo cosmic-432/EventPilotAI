@@ -383,7 +383,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FCF8F7] text-[#1C1917] flex antialiased selection:bg-[#FF9A8B] selection:text-[#1C1917]">
+    <div className="min-h-screen bg-[#FBF5F6] text-[#392832] flex antialiased selection:bg-[#E9B9C9] selection:text-[#392832]">
       {/* 1. Persistent, Collapsible Left Sidebar */}
       <Sidebar
         activeTab={activeTab}

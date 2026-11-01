@@ -12,6 +12,12 @@ import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
+import {
+  validatePlanGenerationInput,
+  validateRegenerateSectionInput,
+  MemoryRateLimiter,
+} from './src/utils/serverValidation';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -20,7 +26,33 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const isProduction = process.env.NODE_ENV === 'production';
 const MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-3.8-flash';
 
+// Rate limiters (Sliding window)
+const planGenerationLimiter = new MemoryRateLimiter(10 * 60 * 1000, 30); // 30 per 10 mins
+const sectionRegenLimiter = new MemoryRateLimiter(10 * 60 * 1000, 60); // 60 per 10 mins
+
+// Security Headers Middleware
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' ws: wss:;"
+  );
+  next();
+});
+
 app.use(express.json({ limit: '2mb' }));
+
+// Helper to extract client IP safely
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') {
+    return forwarded.split(',')[0].trim();
+  }
+  return req.socket.remoteAddress || '127.0.0.1';
+}
 
 // Initialize GoogleGenAI SDK safely
 const apiKey = process.env.GEMINI_API_KEY;
@@ -101,6 +133,32 @@ CRITICAL INSTRUCTIONS & POLICIES:
  * Generates an end-to-end intelligent event master plan
  */
 app.post('/api/plan/generate', async (req: Request, res: Response) => {
+  const clientIp = getClientIp(req);
+  const rateLimitStatus = planGenerationLimiter.check(clientIp);
+
+  res.setHeader('X-RateLimit-Limit', '30');
+  res.setHeader('X-RateLimit-Remaining', String(rateLimitStatus.remaining));
+  res.setHeader('X-RateLimit-Reset', String(rateLimitStatus.resetTime));
+
+  if (!rateLimitStatus.allowed) {
+    res.setHeader('Retry-After', String(rateLimitStatus.retryAfterSeconds));
+    return res.status(429).json({
+      error: 'Rate limit exceeded. Please wait a moment before generating a new plan.',
+      retryAfterSeconds: rateLimitStatus.retryAfterSeconds,
+    });
+  }
+
+  // Strict server-side validation
+  const validation = validatePlanGenerationInput(req.body);
+  if (!validation.isValid || !validation.sanitized) {
+    return res.status(400).json({
+      error: 'Invalid event parameters.',
+      details: validation.errors,
+    });
+  }
+
+  const sanitized = validation.sanitized;
+
   try {
     const {
       name,
@@ -116,14 +174,7 @@ app.post('/api/plan/generate', async (req: Request, res: Response) => {
       accessibilityRequirements = [],
       priorities = [],
       naturalLanguagePrompt = '',
-    } = req.body;
-
-    // Server-side validation
-    if (!name || !targetDate || !totalBudget || !guestCount) {
-      return res.status(400).json({
-        error: 'Missing required parameters: name, targetDate, totalBudget, and guestCount are required.',
-      });
-    }
+    } = sanitized;
 
     if (!aiClient) {
       // Deterministic fallback response when GEMINI_API_KEY is not configured
@@ -315,13 +366,32 @@ Please respond with a JSON object following this EXACT schema:
  * Selectively regenerates an individual section using new constraints
  */
 app.post('/api/plan/regenerate-section', async (req: Request, res: Response) => {
+  const clientIp = getClientIp(req);
+  const rateLimitStatus = sectionRegenLimiter.check(clientIp);
+
+  res.setHeader('X-RateLimit-Limit', '60');
+  res.setHeader('X-RateLimit-Remaining', String(rateLimitStatus.remaining));
+  res.setHeader('X-RateLimit-Reset', String(rateLimitStatus.resetTime));
+
+  if (!rateLimitStatus.allowed) {
+    res.setHeader('Retry-After', String(rateLimitStatus.retryAfterSeconds));
+    return res.status(429).json({
+      error: 'Rate limit exceeded. Please wait a moment before regenerating this section.',
+      retryAfterSeconds: rateLimitStatus.retryAfterSeconds,
+    });
+  }
+
+  const validation = validateRegenerateSectionInput(req.body);
+  if (!validation.isValid || !validation.sanitized) {
+    return res.status(400).json({
+      error: 'Invalid section regeneration request.',
+      details: validation.errors,
+    });
+  }
+
+  const { sectionName, eventContext, newConstraints } = validation.sanitized;
+
   try {
-    const { sectionName, eventContext, newConstraints } = req.body;
-
-    if (!sectionName || !eventContext) {
-      return res.status(400).json({ error: 'Missing sectionName or eventContext.' });
-    }
-
     if (!aiClient) {
       return res.status(503).json({
         error: 'Gemini API is not configured on the server. Section regeneration requires active AI connection.',
@@ -332,14 +402,14 @@ app.post('/api/plan/regenerate-section', async (req: Request, res: Response) => 
 You are EventPilot AI. Update and optimize only the "${sectionName}" section for this event based on new constraints.
 
 Event Context:
-- Event: ${eventContext.name} (${eventContext.category})
-- Location: ${eventContext.location}
-- Guests: ${eventContext.guestCount}
-- Budget: ${eventContext.currency} ${eventContext.totalBudget}
-- Date: ${eventContext.targetDate}
+- Event: ${eventContext.name || 'Signature Event'} (${eventContext.category || 'wedding'})
+- Location: ${eventContext.location || 'Local'}
+- Guests: ${eventContext.guestCount || 100}
+- Budget: ${eventContext.currency || 'INR'} ${eventContext.totalBudget || 500000}
+- Date: ${eventContext.targetDate || '2026-12-31'}
 
 New User Constraints / Guidance:
-${newConstraints}
+${newConstraints || 'Optimize based on best industry practices.'}
 
 Respond with ONLY valid JSON containing the updated "${sectionName}" section formatted in accordance with the standard schema for this section.
 `;
@@ -357,10 +427,10 @@ Respond with ONLY valid JSON containing the updated "${sectionName}" section for
     const parsed = extractJsonFromModelOutput(response.text || '{}');
     return res.json({ sectionData: parsed[sectionName] || parsed });
   } catch (err: any) {
-    console.error('Section regeneration failed:', err);
+    console.error('Section regeneration failed:', err?.message || err);
     res.status(500).json({
       error: 'Failed to regenerate section.',
-      details: err?.message || 'Service error',
+      details: 'The AI service encountered an issue. Please try again.',
     });
   }
 });
