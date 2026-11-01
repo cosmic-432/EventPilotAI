@@ -1,12 +1,16 @@
 /**
  * EventPilot AI - Intelligent Event Planning & Budget Optimization Platform
+ * Velvet Rose Boutique Event Studio Edition
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { WelcomeHero } from './components/WelcomeHero';
 import { SetupWizardModal } from './components/SetupWizardModal';
 import { DashboardView } from './components/DashboardView';
+import { MyEventsView } from './components/MyEventsView';
+import { PlanningHistoryView } from './components/PlanningHistoryView';
 import { BudgetPlannerView } from './components/BudgetPlannerView';
 import { TimelineView } from './components/TimelineView';
 import { VendorsView } from './components/VendorsView';
@@ -17,11 +21,12 @@ import { SettingsView } from './components/SettingsView';
 import { ExportModal } from './components/ExportModal';
 import { PrintModal } from './components/PrintModal';
 import { RegenerateSectionModal } from './components/RegenerateSectionModal';
+import { HelpSupportModal } from './components/HelpSupportModal';
 import { ToastContainer, ToastMessage } from './components/NotificationToast';
 import { EventPlan, EventCategory } from './types/event';
 import { eventRepository, PlanIndexEntry } from './storage/eventRepository';
 import { aiService, GeneratePlanRequestParams } from './services/aiService';
-import { getTodayIso, calculateDateBeforeEvent } from './utils/timeline';
+import { calculateDateBeforeEvent } from './utils/timeline';
 import { toMinorUnits } from './utils/currency';
 
 export default function App() {
@@ -31,15 +36,30 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
+  // Sidebar controls
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    return localStorage.getItem('eventpilot_sidebar_collapsed') === 'true';
+  });
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
+
   // Modal controls
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Undo / Redo tracking
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem('eventpilot_sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const addToast = (type: ToastMessage['type'], title: string, message?: string) => {
     const id = `${Date.now()}_${Math.random().toString(36).substring(2, 5)}`;
@@ -129,18 +149,21 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentPlan]);
 
-  // Generate Plan from Form or Quick-input
+  // Generate Plan: Creates a NEW event without overwriting previous ones!
   const handleGeneratePlan = async (params: GeneratePlanRequestParams) => {
     setIsLoading(true);
     try {
       const result = await aiService.generatePlan(params);
-      handleUpdatePlan(result.plan, true);
+      // Create new plan with guaranteed unique ID in repository
+      const freshPlan = eventRepository.createNewPlan(result.plan);
+      setCurrentPlan(freshPlan);
+      refreshPlansList();
       setIsWizardOpen(false);
       setActiveTab('dashboard');
       if (result.notice) {
         addToast('warning', 'Plan Created with Benchmark Data', result.notice);
       } else {
-        addToast('success', 'Master Plan Generated', `Successfully created ${result.plan.eventDetails.name}`);
+        addToast('success', 'Master Plan Generated', `Successfully created ${freshPlan.eventDetails.name}`);
       }
     } catch (err: any) {
       console.error('Generation error:', err);
@@ -152,7 +175,6 @@ export default function App() {
 
   // Quick prompt parser for welcome hero
   const handleQuickGenerate = (promptText: string) => {
-    // Intelligent heuristic extraction from natural language
     let category: EventCategory = 'wedding';
     const lower = promptText.toLowerCase();
 
@@ -170,14 +192,12 @@ export default function App() {
       category = 'corporate';
     }
 
-    // Extract guests e.g. "250 guests" or "1200 students"
     let guestCount = 200;
     const guestMatch = promptText.match(/(\d+[\d,]*)\s*(?:guests?|attendees?|students?|people|donors?)/i);
     if (guestMatch) {
       guestCount = parseInt(guestMatch[1].replace(/,/g, ''), 10) || 200;
     }
 
-    // Extract budget e.g. "₹8,00,000" or "8,00,000" or "$50,000"
     let totalBudget = 800000;
     let currency = 'INR';
     if (promptText.includes('$')) currency = 'USD';
@@ -192,7 +212,6 @@ export default function App() {
       if (bVal > 1000) totalBudget = Math.round(bVal);
     }
 
-    // Extract days e.g. "in 60 days"
     let daysAway = 60;
     const daysMatch = promptText.match(/in\s*(\d+)\s*days/i);
     if (daysMatch) {
@@ -203,7 +222,6 @@ export default function App() {
     today.setDate(today.getDate() + daysAway);
     const targetDate = today.toISOString().split('T')[0];
 
-    // Extract location
     let location = 'Pune, Maharashtra';
     if (lower.includes('pune')) location = 'Pune, Maharashtra';
     else if (lower.includes('bangalore') || lower.includes('bengaluru')) location = 'Bangalore, Karnataka';
@@ -365,102 +383,156 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0B10] text-[#F3EBDD] flex flex-col antialiased selection:bg-[#C8A96E]/20 selection:text-[#F3EBDD]">
-      {/* Navigation */}
-      <Navbar
+    <div className="min-h-screen bg-[#FCF8F7] text-[#1C1917] flex antialiased selection:bg-[#FF9A8B] selection:text-[#1C1917]">
+      {/* 1. Persistent, Collapsible Left Sidebar */}
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onNewEvent={() => setIsWizardOpen(true)}
+        onOpenHelp={() => setIsHelpOpen(true)}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
+        isMobileOpen={isMobileDrawerOpen}
+        onCloseMobile={() => setIsMobileDrawerOpen(false)}
         currentPlan={currentPlan}
         savedPlans={savedPlans}
         onSelectPlan={handleSelectPlan}
-        onNewEvent={() => setIsWizardOpen(true)}
-        onUndo={handleUndo}
-        onRedo={handleRedo}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        onOpenExport={() => setIsExportOpen(true)}
-        onOpenPrint={() => setIsPrintOpen(true)}
-        onOpenRegenerate={() => setIsRegenerateOpen(true)}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
       />
 
-      {/* Main Workspace Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {!currentPlan ? (
-          <WelcomeHero
-            onQuickGenerate={handleQuickGenerate}
-            onOpenWizard={() => setIsWizardOpen(true)}
-            isLoading={isLoading}
-          />
-        ) : (
-          <div className="animate-in fade-in duration-200">
-            {activeTab === 'dashboard' && (
-              <DashboardView
-                plan={currentPlan}
-                onNavigateTab={setActiveTab}
-                onToggleTask={handleToggleTask}
-                onConfirmAssumption={handleConfirmAssumption}
-              />
-            )}
+      {/* 2. Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        {/* Top Navbar */}
+        <Navbar
+          currentPlan={currentPlan}
+          savedPlans={savedPlans}
+          onSelectPlan={handleSelectPlan}
+          onNewEvent={() => setIsWizardOpen(true)}
+          onUndo={handleUndo}
+          onRedo={handleRedo}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onOpenExport={() => setIsExportOpen(true)}
+          onOpenPrint={() => setIsPrintOpen(true)}
+          onOpenRegenerate={() => setIsRegenerateOpen(true)}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onToggleMobileMenu={() => setIsMobileDrawerOpen((prev) => !prev)}
+        />
 
-            {activeTab === 'budget' && (
-              <BudgetPlannerView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-                onOpenRegenerate={() => setIsRegenerateOpen(true)}
-              />
-            )}
+        {/* Main Workspace Viewport */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {!currentPlan && activeTab !== 'my_events' && activeTab !== 'history' ? (
+            <WelcomeHero
+              onQuickGenerate={handleQuickGenerate}
+              onOpenWizard={() => setIsWizardOpen(true)}
+              isLoading={isLoading}
+            />
+          ) : (
+            <div className="animate-in fade-in duration-200">
+              {/* Overview / Dashboard */}
+              {activeTab === 'dashboard' && currentPlan && (
+                <DashboardView
+                  plan={currentPlan}
+                  savedPlans={savedPlans}
+                  onNavigateTab={setActiveTab}
+                  onToggleTask={handleToggleTask}
+                  onConfirmAssumption={handleConfirmAssumption}
+                  onNewEvent={() => setIsWizardOpen(true)}
+                  onSelectPlan={handleSelectPlan}
+                />
+              )}
 
-            {activeTab === 'timeline' && (
-              <TimelineView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-                onOpenRegenerate={() => setIsRegenerateOpen(true)}
-              />
-            )}
+              {/* My Events Portfolio View */}
+              {activeTab === 'my_events' && (
+                <MyEventsView
+                  currentPlan={currentPlan}
+                  savedPlans={savedPlans}
+                  onSelectPlan={handleSelectPlan}
+                  onNewEvent={() => setIsWizardOpen(true)}
+                  onNavigateTab={setActiveTab}
+                />
+              )}
 
-            {activeTab === 'vendors' && (
-              <VendorsView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-                onOpenRegenerate={() => setIsRegenerateOpen(true)}
-              />
-            )}
+              {/* Dedicated Planning History View */}
+              {activeTab === 'history' && (
+                <PlanningHistoryView
+                  currentPlan={currentPlan}
+                  savedPlans={savedPlans}
+                  onSelectPlan={handleSelectPlan}
+                  onNewEvent={() => setIsWizardOpen(true)}
+                  onRefreshPlans={refreshPlansList}
+                  onNavigateTab={setActiveTab}
+                  addToast={addToast}
+                />
+              )}
 
-            {activeTab === 'ideas' && (
-              <IdeasView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-                onOpenRegenerate={() => setIsRegenerateOpen(true)}
-              />
-            )}
+              {/* Inspiration & Design Concepts */}
+              {activeTab === 'ideas' && currentPlan && (
+                <IdeasView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                  onOpenRegenerate={() => setIsRegenerateOpen(true)}
+                />
+              )}
 
-            {activeTab === 'guests' && (
-              <GuestLogisticsView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-              />
-            )}
+              {/* Budget Planner */}
+              {activeTab === 'budget' && currentPlan && (
+                <BudgetPlannerView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                  onOpenRegenerate={() => setIsRegenerateOpen(true)}
+                />
+              )}
 
-            {activeTab === 'risks' && (
-              <RisksView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-              />
-            )}
+              {/* Vendor Checklist */}
+              {activeTab === 'vendors' && currentPlan && (
+                <VendorsView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                  onOpenRegenerate={() => setIsRegenerateOpen(true)}
+                />
+              )}
 
-            {activeTab === 'settings' && (
-              <SettingsView
-                plan={currentPlan}
-                onUpdatePlan={handleUpdatePlan}
-                onDeletePlan={handleDeletePlan}
-                onImportPlanJson={handleImportJson}
-              />
-            )}
-          </div>
-        )}
-      </main>
+              {/* Preparation Timeline */}
+              {activeTab === 'timeline' && currentPlan && (
+                <TimelineView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                  onOpenRegenerate={() => setIsRegenerateOpen(true)}
+                />
+              )}
 
-      {/* Modals */}
+              {/* Guest & Catering Logistics */}
+              {activeTab === 'guests' && currentPlan && (
+                <GuestLogisticsView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                />
+              )}
+
+              {/* Contingency & Risks */}
+              {activeTab === 'risks' && currentPlan && (
+                <RisksView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                />
+              )}
+
+              {/* Studio Settings */}
+              {activeTab === 'settings' && currentPlan && (
+                <SettingsView
+                  plan={currentPlan}
+                  onUpdatePlan={handleUpdatePlan}
+                  onDeletePlan={handleDeletePlan}
+                  onImportPlanJson={handleImportJson}
+                />
+              )}
+            </div>
+          )}
+        </main>
+      </div>
+
+      {/* Dialog Modals */}
       <SetupWizardModal
         isOpen={isWizardOpen}
         onClose={() => setIsWizardOpen(false)}
@@ -492,6 +564,12 @@ export default function App() {
           />
         </>
       )}
+
+      {/* Help & Support Modal */}
+      <HelpSupportModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
 
       {/* Toast Notification Container */}
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />

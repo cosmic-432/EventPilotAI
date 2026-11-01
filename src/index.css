@@ -1,60 +1,57 @@
 @import "tailwindcss";
 
 @theme {
-  --color-midnight: #0B0B10;
-  --color-surface: #15151D;
-  --color-surface-elevated: #1D1D27;
-  --color-surface-hover: #252533;
-  --color-border-subtle: #30303A;
-  --color-border-light: #424252;
+  --color-primary-bg: #FBF5F6;
+  --color-sidebar-bg: #F5E9ED;
+  --color-card-bg: #FFFFFF;
+  --color-secondary-surface: #FFF0F3;
+  --color-surface-hover: #F8E1E8;
+  --color-border-default: #EADCE1;
+  --color-border-active: #B85F80;
   
-  --color-champagne: #C8A96E;
-  --color-champagne-light: #DFC490;
-  --color-champagne-hover: #B89658;
-  --color-champagne-dark: #8E7341;
-  --color-champagne-subtle: rgba(200, 169, 110, 0.12);
-  --color-champagne-glow: rgba(200, 169, 110, 0.25);
+  --color-rose-primary: #B85F80;
+  --color-rose-deep: #984665;
+  --color-rose-soft: #E9B9C9;
+  --color-gold-champagne: #B89555;
 
-  --color-text-primary: #F3EBDD;
-  --color-text-secondary: #A5A3AD;
-  --color-text-muted: #72707B;
+  --color-text-primary: #392832;
+  --color-text-secondary: #74616B;
+  --color-text-muted: #998791;
 
-  --color-status-success: #829879;
-  --color-status-success-bg: rgba(130, 152, 121, 0.14);
-  --color-status-warning: #E4B66A;
-  --color-status-warning-bg: rgba(228, 182, 106, 0.14);
-  --color-status-error: #E47777;
-  --color-status-error-bg: rgba(228, 119, 119, 0.14);
+  --color-status-success: #477D60;
+  --color-status-warning: #A87531;
+  --color-status-error: #B94D5A;
+  --color-status-info: #B85F80;
 }
 
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Cormorant Garamond', Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-heading: 'Cormorant Garamond', Georgia, Cambria, 'Times New Roman', Times, serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-    /* Semantic Design Tokens: Midnight Champagne */
-    --bg-main: #0B0B10;
-    --bg-surface: #15151D;
-    --bg-secondary: #1D1D27;
-    --bg-hover: #252533;
-    --border-divider: #30303A;
-    --border-highlight: #424252;
+    /* Semantic Design Tokens: Light Velvet Rose */
+    --bg-main: #FBF5F6;
+    --bg-sidebar: #F5E9ED;
+    --bg-card: #FFFFFF;
+    --bg-secondary: #FFF0F3;
+    --bg-hover: #F8E1E8;
+    --border-default: #EADCE1;
+    --border-active: #B85F80;
 
-    --accent-champagne: #C8A96E;
-    --accent-champagne-light: #DFC490;
-    --accent-champagne-hover: #B89658;
-    --accent-champagne-subtle: rgba(200, 169, 110, 0.12);
+    --brand-rose: #B85F80;
+    --brand-rose-deep: #984665;
+    --brand-rose-soft: #E9B9C9;
+    --brand-gold: #B89555;
 
-    --text-primary: #F3EBDD;
-    --text-secondary: #A5A3AD;
-    --text-muted: #72707B;
+    --text-primary: #392832;
+    --text-secondary: #74616B;
+    --text-muted: #998791;
 
-    --color-success: #829879;
-    --color-success-bg: rgba(130, 152, 121, 0.14);
-    --color-warning: #E4B66A;
-    --color-warning-bg: rgba(228, 182, 106, 0.14);
-    --color-error: #E47777;
-    --color-error-bg: rgba(228, 119, 119, 0.14);
+    --color-success: #477D60;
+    --color-warning: #A87531;
+    --color-error: #B94D5A;
   }
 
   body {
@@ -64,11 +61,19 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+
+  .font-editorial {
+    font-family: var(--font-serif);
+  }
+
+  h1, h2, h3 {
+    letter-spacing: -0.01em;
+  }
 }
 
-/* Clearly visible champagne-colored focus outline across all interactive elements */
+/* Clearly visible rose-colored focus outline across all interactive elements */
 :focus-visible {
-  outline: 2px solid #C8A96E !important;
+  outline: 2px solid #B85F80 !important;
   outline-offset: 2px !important;
 }
 
@@ -77,27 +82,27 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible,
 a:focus-visible {
-  outline: 2px solid #C8A96E !important;
+  outline: 2px solid #B85F80 !important;
   outline-offset: 2px !important;
 }
 
-/* Custom scrollbars for dark theme surfaces */
+/* Custom scrollbars for Light Velvet Rose theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #0B0B10;
+  background: #FBF5F6;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #30303A;
+  background: #EADCE1;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #424252;
+  background: #B85F80;
 }
 
 /* Tabular figures for reliable financial and numeric column alignment */
@@ -126,7 +131,7 @@ a:focus-visible {
   }
   
   .print-card {
-    border: 1px solid #30303A !important;
+    border: 1px solid #EADCE1 !important;
     box-shadow: none !important;
     margin-bottom: 1rem !important;
     page-break-inside: avoid;

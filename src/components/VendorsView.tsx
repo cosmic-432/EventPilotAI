@@ -67,7 +67,7 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
   const handleSaveVendor = () => {
     if (!formData.title.trim()) return;
 
-    const estCostMinor = toMinorUnits(formData.estimatedCostMajor, currency);
+    const costMinor = toMinorUnits(formData.estimatedCostMajor, currency);
     let updated = [...plan.vendors.items];
 
     if (editingVendor) {
@@ -78,7 +78,7 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
               title: formData.title,
               category: formData.category,
               selectionGuidance: formData.selectionGuidance,
-              estimatedCostMinor: estCostMinor,
+              estimatedCostMinor: costMinor,
               targetBookingDate: formData.targetBookingDate,
               bookingStatus: formData.bookingStatus,
               contactName: formData.contactName,
@@ -89,21 +89,21 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
           : v
       );
     } else {
-      const newVendor: VendorItem = {
+      const newV: VendorItem = {
         id: generateId('vnd_usr'),
         title: formData.title,
         category: formData.category,
-        selectionGuidance: formData.selectionGuidance || 'Self-sourced service partner.',
-        estimatedCostMinor: estCostMinor,
+        selectionGuidance: formData.selectionGuidance,
+        estimatedCostMinor: costMinor,
         targetBookingDate: formData.targetBookingDate,
         bookingStatus: formData.bookingStatus,
         contactName: formData.contactName,
         contactPhone: formData.contactPhone,
         contactEmail: formData.contactEmail,
         notes: formData.notes,
-        selectionCriteria: ['Verify business portfolio & reviews', 'Request transparent written quote'],
+        selectionCriteria: [],
       };
-      updated.push(newVendor);
+      updated.push(newV);
     }
 
     onUpdatePlan({
@@ -115,8 +115,8 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
     setIsAddingVendor(false);
   };
 
-  const handleDeleteVendor = (vendorId: string) => {
-    const updated = plan.vendors.items.filter((v) => v.id !== vendorId);
+  const handleDeleteVendor = (id: string) => {
+    const updated = plan.vendors.items.filter((v) => v.id !== id);
     onUpdatePlan({
       ...plan,
       vendors: { items: updated },
@@ -125,24 +125,27 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Header & Disclaimer */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#EADCE1]">
         <div>
-          <h2 className="text-xl font-extrabold text-[#F3EBDD] tracking-tight">
-            Vendor Sourcing Checklist & Quotation Tracker
+          <span className="text-xs uppercase font-mono tracking-widest text-[#B89555] font-semibold">
+            Partner Directory
+          </span>
+          <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#392832] tracking-tight mt-0.5">
+            Vendor Guidance & Quotation Tracker
           </h2>
-          <p className="text-xs text-[#A5A3AD] mt-0.5">
-            Track quotations, interviews, and contact info for every service category.
+          <p className="text-sm text-[#74616B] mt-0.5">
+            AI-recommended partner selection criteria, contract lock dates, and communication phonebook.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={onOpenRegenerate}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-[#15151D] text-[#C8A96E] hover:bg-[#1D1D27] border border-[#30303A] transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl bg-white text-[#B85F80] hover:bg-[#FFF0F3] border border-[#EADCE1] transition-colors shadow-2xs"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#C8A96E]" />
-            <span>AI Criteria Refresh</span>
+            <Sparkles className="w-3.5 h-3.5 text-[#B85F80]" />
+            <span>AI Refresh Criteria</span>
           </button>
 
           <button
@@ -162,61 +165,51 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
               });
               setIsAddingVendor(true);
             }}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-[#C8A96E] hover:bg-[#DFC490] text-[#0B0B10] shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-[#B85F80] hover:bg-[#984665] text-white shadow-xs transition-colors active:scale-[0.98]"
           >
-            <Plus className="w-4 h-4 text-[#0B0B10]" /> Add Vendor Partner
+            <Plus className="w-4 h-4 text-white" /> Add Service Partner
           </button>
         </div>
       </div>
 
-      {/* Honest AI Disclaimer Banner */}
-      <div className="p-4 rounded-2xl bg-[#15151D] border border-[#30303A] text-[#A5A3AD] flex items-start gap-3">
-        <Info className="w-5 h-5 text-[#C8A96E] mt-0.5 shrink-0" />
-        <div className="text-xs space-y-1">
-          <p className="font-bold text-[#F3EBDD]">
-            Vendor Guidance Notice:
-          </p>
-          <p className="leading-relaxed text-[#A5A3AD]">
-            AI-generated recommendations provide professional selection criteria, negotiation tips, and cost benchmarks based on your event scale. They are not paid advertisements or verified listings. You can record your actual contracted vendors and contacts below.
-          </p>
-        </div>
+      {/* Notice box */}
+      <div className="p-4 rounded-2xl bg-white border border-[#EADCE1] text-xs text-[#74616B] flex items-start gap-3 shadow-xs">
+        <Info className="w-5 h-5 text-[#B89555] shrink-0 mt-0.5" />
+        <p className="leading-relaxed">
+          <strong className="text-[#392832]">Studio Privacy Guarantee:</strong> Real local vendor pricing and contact details entered below are stored strictly on your local device. EventPilot AI uses anonymized market benchmarks when optimizing budgets.
+        </p>
       </div>
 
-      {/* Vendor Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Vendors Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {plan.vendors.items.map((vendor) => {
           const estMajor = toMajorUnits(vendor.estimatedCostMinor, currency);
 
           return (
             <div
               key={vendor.id}
-              className="p-5 rounded-3xl bg-[#15151D] border border-[#30303A] shadow-xs hover:border-[#C8A96E]/50 transition-all flex flex-col justify-between"
+              className="p-5 rounded-3xl bg-white border border-[#EADCE1] hover:border-[#B85F80]/50 transition-all duration-200 flex flex-col justify-between space-y-4 shadow-xs hover:shadow-md"
             >
-              <div>
-                {/* Card Header */}
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#C8A96E] block mb-0.5">
-                      {vendor.category}
-                    </span>
-                    <h3 className="text-base font-bold text-[#F3EBDD]">{vendor.title}</h3>
-                  </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#FFF8ED] text-[#B89555] border border-[#EADCE1]">
+                    {vendor.category}
+                  </span>
 
-                  {/* Status Dropdown */}
                   <select
                     value={vendor.bookingStatus}
                     onChange={(e) => handleStatusChange(vendor.id, e.target.value as BookingStatus)}
                     aria-label={`Booking status for ${vendor.title}`}
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-[#C8A96E] capitalize ${
+                    className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border cursor-pointer focus:outline-none ${
                       vendor.bookingStatus === 'confirmed'
-                        ? 'bg-[rgba(130,152,121,0.15)] text-[#829879] border-[#829879]/30'
+                        ? 'bg-[#F0F7F4] text-[#477D60] border-emerald-200'
                         : vendor.bookingStatus === 'quotation_received'
-                        ? 'bg-[rgba(200,169,110,0.15)] text-[#C8A96E] border-[#C8A96E]/30'
+                        ? 'bg-[#FFF0F3] text-[#B85F80] border-[#E9B9C9]'
                         : vendor.bookingStatus === 'negotiating'
-                        ? 'bg-[rgba(228,182,106,0.15)] text-[#E4B66A] border-[#E4B66A]/30'
+                        ? 'bg-[#FFF8ED] text-[#A87531] border-[#EADCE1]'
                         : vendor.bookingStatus === 'cancelled'
-                        ? 'bg-[rgba(228,119,119,0.15)] text-[#E47777] border-[#E47777]/30'
-                        : 'bg-[#1D1D27] text-[#A5A3AD] border-[#30303A]'
+                        ? 'bg-[#FFF0F3] text-[#B94D5A] border-[#B94D5A]/30'
+                        : 'bg-[#FBF5F6] text-[#74616B] border-[#EADCE1]'
                     }`}
                   >
                     <option value="not_started">Not Started</option>
@@ -228,65 +221,42 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
                   </select>
                 </div>
 
-                {/* Target Date & Cost Benchmark */}
-                <div className="flex items-center gap-4 text-xs text-[#A5A3AD] mb-3 font-mono">
-                  <span>💰 Est: <strong className="text-[#C8A96E] font-bold">{formatCurrency(vendor.estimatedCostMinor, currency)}</strong></span>
-                  <span>📅 Target Lock: <strong className="text-[#F3EBDD] font-bold">{formatDisplayDate(vendor.targetBookingDate)}</strong></span>
+                <div>
+                  <h3 className="font-editorial text-lg font-bold text-[#392832]">{vendor.title}</h3>
+                  <p className="text-xs text-[#74616B] mt-1 leading-relaxed">{vendor.selectionGuidance}</p>
                 </div>
 
-                {/* Selection Guidance */}
-                <p className="text-xs text-[#F3EBDD] leading-relaxed bg-[#1D1D27] p-3 rounded-xl border border-[#30303A] mb-3">
-                  💡 {vendor.selectionGuidance}
-                </p>
+                <div className="p-3 rounded-2xl bg-[#FBF5F6] border border-[#EADCE1] space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between text-[#74616B]">
+                    <span>Target Booking Date:</span>
+                    <strong className="text-[#392832] font-mono">{formatDisplayDate(vendor.targetBookingDate)}</strong>
+                  </div>
+                  <div className="flex items-center justify-between text-[#74616B]">
+                    <span>Est. Allocation:</span>
+                    <strong className="text-[#B89555] font-mono">{formatCurrency(vendor.estimatedCostMinor, currency)}</strong>
+                  </div>
+                </div>
 
-                {/* Selection Criteria Checklist */}
-                {vendor.selectionCriteria && vendor.selectionCriteria.length > 0 && (
-                  <div className="mb-3 space-y-1">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#A5A3AD]">
-                      Vetting Criteria:
+                {/* Contact phonebook snippet */}
+                <div className="space-y-1 text-xs">
+                  {vendor.contactName && (
+                    <p className="font-semibold text-[#392832]">{vendor.contactName}</p>
+                  )}
+                  {vendor.contactPhone && (
+                    <p className="text-[#74616B] flex items-center gap-1.5 font-mono text-[11px]">
+                      <Phone className="w-3 h-3 text-[#B85F80]" /> {vendor.contactPhone}
                     </p>
-                    <ul className="text-xs text-[#A5A3AD] space-y-1">
-                      {vendor.selectionCriteria.map((c, i) => (
-                        <li key={i} className="flex items-start gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#829879] mt-0.5 shrink-0" />
-                          <span className="text-[#F3EBDD]">{c}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Contact Information (if entered by user) */}
-                {(vendor.contactName || vendor.contactPhone || vendor.contactEmail) && (
-                  <div className="p-2.5 rounded-xl bg-[#1D1D27] border border-[#30303A] text-xs text-[#F3EBDD] space-y-1 mb-2">
-                    <span className="text-[10px] font-bold uppercase text-[#C8A96E] block">
-                      Contracted Contact Info:
-                    </span>
-                    {vendor.contactName && <p className="font-semibold text-[#F3EBDD]">{vendor.contactName}</p>}
-                    <div className="flex flex-wrap items-center gap-3 text-[#A5A3AD]">
-                      {vendor.contactPhone && (
-                        <span className="flex items-center gap-1 font-mono">
-                          <Phone className="w-3 h-3 text-[#C8A96E]" /> {vendor.contactPhone}
-                        </span>
-                      )}
-                      {vendor.contactEmail && (
-                        <span className="flex items-center gap-1 font-mono">
-                          <Mail className="w-3 h-3 text-[#C8A96E]" /> {vendor.contactEmail}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {vendor.notes && (
-                  <p className="text-[11px] text-[#72707B] italic mt-1">
-                    Notes: {vendor.notes}
-                  </p>
-                )}
+                  )}
+                  {vendor.contactEmail && (
+                    <p className="text-[#74616B] flex items-center gap-1.5 font-mono text-[11px] truncate">
+                      <Mail className="w-3 h-3 text-[#B89555]" /> {vendor.contactEmail}
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#30303A] mt-3">
+              {/* Actions */}
+              <div className="pt-3 border-t border-[#EADCE1] flex items-center justify-end gap-2">
                 <button
                   onClick={() => {
                     setEditingVendor(vendor);
@@ -304,13 +274,14 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
                     });
                     setIsAddingVendor(true);
                   }}
-                  className="px-3 py-1.5 rounded-lg border border-[#30303A] bg-[#1D1D27] hover:bg-[#252533] text-xs font-medium text-[#F3EBDD] flex items-center gap-1.5 transition-colors"
+                  className="p-1.5 rounded-lg text-[#74616B] hover:text-[#392832] hover:bg-[#F8E1E8]"
+                  aria-label={`Edit ${vendor.title}`}
                 >
-                  <Edit2 className="w-3.5 h-3.5 text-[#C8A96E]" /> Edit
+                  <Edit2 className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => handleDeleteVendor(vendor.id)}
-                  className="p-1.5 rounded-lg text-[#A5A3AD] hover:text-[#E47777] hover:bg-[rgba(228,119,119,0.1)] transition-colors"
+                  className="p-1.5 rounded-lg text-[#74616B] hover:text-[#B94D5A] hover:bg-[#FFF0F3]"
                   aria-label={`Delete ${vendor.title}`}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -326,42 +297,49 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0B10]/80 backdrop-blur-xs overflow-y-auto"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
         >
-          <div className="w-full max-w-lg bg-[#15151D] rounded-3xl p-6 shadow-2xl border border-[#30303A] space-y-4 my-8">
-            <h3 className="text-base font-bold text-[#F3EBDD]">
-              {editingVendor ? 'Edit Vendor Partner' : 'Add New Vendor Partner'}
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4 max-h-[90vh] overflow-y-auto">
+            <h3 className="font-editorial text-base font-bold text-[#392832]">
+              {editingVendor ? 'Edit Partner Details' : 'Add New Service Partner'}
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Service / Title *</label>
+                <label className="block text-xs font-bold text-[#74616B] mb-1">Partner / Deliverable *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="e.g. Traditional Dhol Tasha Troupe, Marquee Pavilion setup"
-                  className="w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                  placeholder="e.g. Heritage Fort Lawn, Royal Dhol Ensemble"
+                  className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] placeholder:text-[#998791] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Category</label>
-                  <input
-                    type="text"
+                  <label className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
+                  <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
-                  />
+                    className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
+                  >
+                    <option value="Venue">Venue</option>
+                    <option value="Catering">Catering</option>
+                    <option value="Decor">Decor</option>
+                    <option value="Photography">Photography</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Logistics">Logistics</option>
+                    <option value="Production">Production</option>
+                  </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Booking Status</label>
+                  <label className="block text-xs font-bold text-[#74616B] mb-1">Status</label>
                   <select
                     value={formData.bookingStatus}
                     onChange={(e) => setFormData({ ...formData, bookingStatus: e.target.value as BookingStatus })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="not_started">Not Started</option>
                     <option value="contacted">Contacted</option>
@@ -375,8 +353,8 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#A5A3AD] mb-1">
-                    Estimated Cost ({currency})
+                  <label className="block text-xs font-bold text-[#74616B] mb-1">
+                    Est. Cost ({currency})
                   </label>
                   <input
                     type="number"
@@ -385,70 +363,71 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
                     onChange={(e) =>
                       setFormData({ ...formData, estimatedCostMajor: Number(e.target.value) })
                     }
-                    className="w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm font-mono text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm font-mono text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Target Lock Date</label>
+                  <label className="block text-xs font-bold text-[#74616B] mb-1">Lock Date</label>
                   <input
                     type="date"
                     value={formData.targetBookingDate}
                     onChange={(e) => setFormData({ ...formData, targetBookingDate: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Selection Guidance</label>
+                <label className="block text-xs font-bold text-[#74616B] mb-1">Selection Guidance</label>
                 <textarea
                   rows={2}
                   value={formData.selectionGuidance}
                   onChange={(e) => setFormData({ ...formData, selectionGuidance: e.target.value })}
-                  placeholder="Key considerations, vetting notes, or portfolio checklist..."
-                  className="w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] resize-none"
+                  placeholder="Key criteria, insurance requirements, acoustic restrictions..."
+                  className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] placeholder:text-[#998791] focus:outline-none focus:ring-2 focus:ring-[#B85F80] resize-none"
                 />
               </div>
 
-              <div className="pt-2 border-t border-[#30303A]">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-[#C8A96E] mb-2">
-                  Direct Contact Information (Optional)
-                </p>
+              {/* Contact info fields */}
+              <div className="pt-2 border-t border-[#EADCE1] space-y-2">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#74616B]">
+                  Contact Information (Stored Locally)
+                </span>
                 <div className="grid grid-cols-3 gap-2">
                   <input
                     type="text"
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
                     placeholder="Contact Name"
-                    className="px-2.5 py-1.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    className="px-2.5 py-1.5 rounded-lg border border-[#EADCE1] bg-[#FBF5F6] text-xs text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   />
                   <input
                     type="text"
                     value={formData.contactPhone}
                     onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                    placeholder="Phone Number"
-                    className="px-2.5 py-1.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs font-mono text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    placeholder="Phone"
+                    className="px-2.5 py-1.5 rounded-lg border border-[#EADCE1] bg-[#FBF5F6] text-xs font-mono text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   />
                   <input
                     type="email"
                     value={formData.contactEmail}
                     onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                    placeholder="Email Address"
-                    className="px-2.5 py-1.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs font-mono text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    placeholder="Email"
+                    className="px-2.5 py-1.5 rounded-lg border border-[#EADCE1] bg-[#FBF5F6] text-xs font-mono text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#30303A]">
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#EADCE1]">
               <button
                 type="button"
                 onClick={() => {
                   setEditingVendor(null);
                   setIsAddingVendor(false);
                 }}
-                className="px-4 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs font-semibold text-[#A5A3AD] hover:text-[#F3EBDD] hover:bg-[#252533]"
+                className="px-4 py-2 rounded-xl border border-[#EADCE1] bg-white text-xs font-semibold text-[#74616B] hover:text-[#392832] hover:bg-[#F8E1E8]"
               >
                 Cancel
               </button>
@@ -456,7 +435,7 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
                 type="button"
                 onClick={handleSaveVendor}
                 disabled={!formData.title.trim()}
-                className="px-5 py-2 rounded-xl bg-[#C8A96E] hover:bg-[#DFC490] disabled:opacity-40 text-[#0B0B10] text-xs font-bold shadow-xs"
+                className="px-5 py-2 rounded-xl bg-[#B85F80] hover:bg-[#984665] disabled:opacity-40 text-white text-xs font-bold shadow-xs active:scale-[0.98]"
               >
                 Save Partner
               </button>

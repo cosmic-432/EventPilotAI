@@ -39,11 +39,11 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
     totalBudget: 800000,
     currency: 'INR',
     venuePreference: 'outdoor' as VenuePreference,
-    styleTheme: 'Traditional Maharashtrian with Elegant Contemporary Floral Accents',
+    styleTheme: 'Traditional Maharashtrian with Velvet Rose & Contemporary Floral Accents',
     dietaryRequirements: ['Vegetarian', 'Jain Options', 'Live Regional Snacks'],
     accessibilityRequirements: ['Wheelchair Ramps & Handrails', 'Reserved Elder Seating'],
     priorities: ['Memorable guest hospitality', 'Authentic regional catering', 'Vibrant ambient decor'],
-    notes: 'Prefer an open lawn venue with waterproof backup marquee.',
+    notes: 'Prefer an open lawn venue with evening candle lighting and waterproof marquee backup.',
   });
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
@@ -104,33 +104,33 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="wizard-title"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0B0B10]/80 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C1917]/40 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="relative w-full max-w-2xl bg-[#15151D] rounded-3xl shadow-2xl border border-[#30303A] overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#EEDCD7] overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#30303A] flex items-center justify-between bg-[#15151D]">
+        <div className="px-6 py-5 border-b border-[#EEDCD7] flex items-center justify-between bg-white">
           <div>
-            <h2 id="wizard-title" className="text-lg font-bold text-[#F3EBDD] flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#C8A96E]" />
+            <h2 id="wizard-title" className="font-editorial text-xl font-bold text-[#1C1917] flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-[#FF6F61]" />
               Event Setup Wizard
             </h2>
-            <p className="text-xs text-[#A5A3AD] mt-0.5">
+            <p className="text-xs text-[#57534E] mt-0.5">
               Step {step} of {totalSteps} — {step === 1 ? 'Basics & Timing' : step === 2 ? 'Budget & Scale' : step === 3 ? 'Venue & Style' : 'Inclusivity & Review'}
             </p>
           </div>
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="p-2 rounded-xl text-[#A5A3AD] hover:text-[#F3EBDD] hover:bg-[#1D1D27] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]"
+            className="p-2 rounded-xl text-[#57534E] hover:text-[#1C1917] hover:bg-[#FDE8E3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Progress Bar (Champagne Accent) */}
-        <div className="w-full bg-[#1D1D27] h-1.5">
+        {/* Progress Bar (Rose Accent) */}
+        <div className="w-full bg-[#F8EFEB] h-1.5">
           <div
-            className="bg-[#C8A96E] h-1.5 transition-all duration-300"
+            className="bg-[#FF6F61] h-1.5 transition-all duration-300"
             style={{ width: `${(step / totalSteps) * 100}%` }}
           />
         </div>
@@ -140,7 +140,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <label htmlFor="evtName" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                <label htmlFor="evtName" className="block text-xs font-bold text-[#57534E] mb-1">
                   Event Name *
                 </label>
                 <input
@@ -149,23 +149,23 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Maya & Arjun Wedding, Spring Tech Fest 2026"
-                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#1D1D27] text-sm text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 ${
-                    errors.name ? 'border-[#E47777] ring-[#E47777]/30' : 'border-[#30303A] focus:ring-[#C8A96E]'
+                  className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#FCF8F7] text-sm text-[#1C1917] placeholder:text-[#8A827D] focus:outline-none focus:ring-2 ${
+                    errors.name ? 'border-[#B94D5A] ring-[#B94D5A]/30' : 'border-[#EEDCD7] focus:ring-[#FF6F61]'
                   }`}
                 />
-                {errors.name && <p className="text-xs text-[#E47777] mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-xs text-[#B94D5A] mt-1">{errors.name}</p>}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="evtCategory" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                  <label htmlFor="evtCategory" className="block text-xs font-bold text-[#57534E] mb-1">
                     Category *
                   </label>
                   <select
                     id="evtCategory"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value as EventCategory })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
                   >
                     <option value="wedding">Wedding & Engagement</option>
                     <option value="birthday">Birthday & Milestone</option>
@@ -179,7 +179,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                 </div>
 
                 <div>
-                  <label htmlFor="evtDate" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                  <label htmlFor="evtDate" className="block text-xs font-bold text-[#57534E] mb-1">
                     Event Date *
                   </label>
                   <input
@@ -188,32 +188,32 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                     min={getTodayIso()}
                     value={formData.targetDate}
                     onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
-                    className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 ${
-                      errors.targetDate ? 'border-[#E47777] ring-[#E47777]/30' : 'border-[#30303A] focus:ring-[#C8A96E]'
+                    className={`w-full px-3.5 py-2.5 rounded-xl border bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 ${
+                      errors.targetDate ? 'border-[#B94D5A] ring-[#B94D5A]/30' : 'border-[#EEDCD7] focus:ring-[#FF6F61]'
                     }`}
                   />
-                  {errors.targetDate && <p className="text-xs text-[#E47777] mt-1">{errors.targetDate}</p>}
+                  {errors.targetDate && <p className="text-xs text-[#B94D5A] mt-1">{errors.targetDate}</p>}
                 </div>
               </div>
 
               <div>
-                <label htmlFor="evtLocation" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                <label htmlFor="evtLocation" className="block text-xs font-bold text-[#57534E] mb-1">
                   City or Location *
                 </label>
                 <div className="relative">
-                  <MapPin className="w-4 h-4 text-[#A5A3AD] absolute left-3.5 top-3" />
+                  <MapPin className="w-4 h-4 text-[#57534E] absolute left-3.5 top-3" />
                   <input
                     id="evtLocation"
                     type="text"
                     value={formData.location}
                     onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                     placeholder="e.g. Pune, Bangalore, Mumbai, New Delhi"
-                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-[#1D1D27] text-sm text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 ${
-                      errors.location ? 'border-[#E47777] ring-[#E47777]/30' : 'border-[#30303A] focus:ring-[#C8A96E]'
+                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-[#FCF8F7] text-sm text-[#1C1917] placeholder:text-[#8A827D] focus:outline-none focus:ring-2 ${
+                      errors.location ? 'border-[#B94D5A] ring-[#B94D5A]/30' : 'border-[#EEDCD7] focus:ring-[#FF6F61]'
                     }`}
                   />
                 </div>
-                {errors.location && <p className="text-xs text-[#E47777] mt-1">{errors.location}</p>}
+                {errors.location && <p className="text-xs text-[#B94D5A] mt-1">{errors.location}</p>}
               </div>
             </div>
           )}
@@ -222,11 +222,11 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="guestCount" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                  <label htmlFor="guestCount" className="block text-xs font-bold text-[#57534E] mb-1">
                     Estimated Guests *
                   </label>
                   <div className="relative">
-                    <Users className="w-4 h-4 text-[#A5A3AD] absolute left-3.5 top-3" />
+                    <Users className="w-4 h-4 text-[#57534E] absolute left-3.5 top-3" />
                     <input
                       id="guestCount"
                       type="number"
@@ -234,23 +234,23 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                       max="100000"
                       value={formData.guestCount}
                       onChange={(e) => setFormData({ ...formData, guestCount: Number(e.target.value) })}
-                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 ${
-                        errors.guestCount ? 'border-[#E47777] ring-[#E47777]/30' : 'border-[#30303A] focus:ring-[#C8A96E]'
+                      className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 ${
+                        errors.guestCount ? 'border-[#B94D5A] ring-[#B94D5A]/30' : 'border-[#EEDCD7] focus:ring-[#FF6F61]'
                       }`}
                     />
                   </div>
-                  {errors.guestCount && <p className="text-xs text-[#E47777] mt-1">{errors.guestCount}</p>}
+                  {errors.guestCount && <p className="text-xs text-[#B94D5A] mt-1">{errors.guestCount}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="currencySelect" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                  <label htmlFor="currencySelect" className="block text-xs font-bold text-[#57534E] mb-1">
                     Currency *
                   </label>
                   <select
                     id="currencySelect"
                     value={formData.currency}
                     onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
                   >
                     {Object.values(SUPPORTED_CURRENCIES).map((c) => (
                       <option key={c.code} value={c.code}>
@@ -262,25 +262,25 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
               </div>
 
               <div>
-                <label htmlFor="totalBudget" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                <label htmlFor="totalBudget" className="block text-xs font-bold text-[#57534E] mb-1">
                   Total Budget ({SUPPORTED_CURRENCIES[formData.currency]?.symbol || formData.currency}) *
                 </label>
                 <div className="relative">
-                  <DollarSign className="w-4 h-4 text-[#A5A3AD] absolute left-3.5 top-3" />
+                  <DollarSign className="w-4 h-4 text-[#57534E] absolute left-3.5 top-3" />
                   <input
                     id="totalBudget"
                     type="number"
                     min="1"
                     value={formData.totalBudget}
                     onChange={(e) => setFormData({ ...formData, totalBudget: Number(e.target.value) })}
-                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-[#1D1D27] text-sm font-mono text-[#F3EBDD] focus:outline-none focus:ring-2 ${
-                      errors.totalBudget ? 'border-[#E47777] ring-[#E47777]/30' : 'border-[#30303A] focus:ring-[#C8A96E]'
+                    className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-[#FCF8F7] text-sm font-mono text-[#1C1917] focus:outline-none focus:ring-2 ${
+                      errors.totalBudget ? 'border-[#B94D5A] ring-[#B94D5A]/30' : 'border-[#EEDCD7] focus:ring-[#FF6F61]'
                     }`}
                   />
                 </div>
-                {errors.totalBudget && <p className="text-xs text-[#E47777] mt-1">{errors.totalBudget}</p>}
-                <p className="text-xs text-[#A5A3AD] mt-1">
-                  Preview: <span className="font-semibold text-[#C8A96E]">
+                {errors.totalBudget && <p className="text-xs text-[#B94D5A] mt-1">{errors.totalBudget}</p>}
+                <p className="text-xs text-[#57534E] mt-1">
+                  Preview: <span className="font-semibold text-[#B89555]">
                     {formatCurrency(toMinorUnits(formData.totalBudget, formData.currency), formData.currency)}
                   </span>
                 </p>
@@ -291,7 +291,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#A5A3AD] mb-2">
+                <label className="block text-xs font-bold text-[#57534E] mb-2">
                   Venue Preference
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -302,18 +302,18 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                       onClick={() => setFormData({ ...formData, venuePreference: pref })}
                       className={`p-3 rounded-xl border text-xs font-semibold capitalize text-center transition-all ${
                         formData.venuePreference === pref
-                          ? 'border-[#C8A96E] bg-[#1D1D27] text-[#C8A96E] ring-1 ring-[#C8A96E]'
-                          : 'border-[#30303A] bg-[#1D1D27] hover:bg-[#252533] text-[#A5A3AD] hover:text-[#F3EBDD]'
+                          ? 'border-[#FF6F61] bg-[#FFF2EF] text-[#FF6F61] ring-1 ring-[#FF6F61]'
+                          : 'border-[#EEDCD7] bg-[#FCF8F7] hover:bg-[#FDE8E3] text-[#57534E] hover:text-[#1C1917]'
                       }`}
                     >
-                      {pref === 'outdoor' ? '🌲 Outdoor Lawn' : pref === 'indoor' ? '🏛️ Indoor Banquet' : pref === 'hybrid' ? '🌿 Hybrid / Both' : '🔄 Flexible'}
+                      {pref === 'outdoor' ? '🌲 Outdoor Lawn' : pref === 'indoor' ? '🏛️ Indoor Banquet' : pref === 'hybrid' ? '🌿 Hybrid' : '🔄 Flexible'}
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label htmlFor="styleTheme" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                <label htmlFor="styleTheme" className="block text-xs font-bold text-[#57534E] mb-1">
                   Desired Style or Theme
                 </label>
                 <input
@@ -321,13 +321,13 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                   type="text"
                   value={formData.styleTheme}
                   onChange={(e) => setFormData({ ...formData, styleTheme: e.target.value })}
-                  placeholder="e.g. Royal Heritage, Bohemian Floral, Minimalist Sunset"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+                  placeholder="e.g. Royal Heritage, Velvet Rose Romance, Minimalist Sunset"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] placeholder:text-[#8A827D] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#A5A3AD] mb-2">
+                <label className="block text-xs font-bold text-[#57534E] mb-2">
                   Key Priorities (Select all that apply)
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -348,11 +348,11 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         onClick={() => toggleArrayItem('priorities', prio)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
                           isSelected
-                            ? 'bg-[#C8A96E] text-[#0B0B10] font-bold border-[#C8A96E]'
-                            : 'bg-[#1D1D27] text-[#A5A3AD] border-[#30303A] hover:bg-[#252533] hover:text-[#F3EBDD]'
+                            ? 'bg-[#FF6F61] text-white font-bold border-[#FF6F61]'
+                            : 'bg-[#FCF8F7] text-[#57534E] border-[#EEDCD7] hover:bg-[#FDE8E3] hover:text-[#1C1917]'
                         }`}
                       >
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0B0B10]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                         {prio}
                       </button>
                     );
@@ -365,7 +365,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-[#A5A3AD] mb-2">
+                <label className="block text-xs font-bold text-[#57534E] mb-2">
                   Dietary Accommodations
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -387,11 +387,11 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         onClick={() => toggleArrayItem('dietaryRequirements', diet)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
                           isSelected
-                            ? 'bg-[#829879] text-[#0B0B10] font-bold border-[#829879]'
-                            : 'bg-[#1D1D27] text-[#A5A3AD] border-[#30303A] hover:bg-[#252533] hover:text-[#F3EBDD]'
+                            ? 'bg-[#477D60] text-white font-bold border-[#477D60]'
+                            : 'bg-[#FCF8F7] text-[#57534E] border-[#EEDCD7] hover:bg-[#FDE8E3] hover:text-[#1C1917]'
                         }`}
                       >
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0B0B10]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                         {diet}
                       </button>
                     );
@@ -400,7 +400,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#A5A3AD] mb-2">
+                <label className="block text-xs font-bold text-[#57534E] mb-2">
                   Accessibility & Mobility Requirements
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -420,11 +420,11 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                         onClick={() => toggleArrayItem('accessibilityRequirements', acc)}
                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors flex items-center gap-1.5 ${
                           isSelected
-                            ? 'bg-[#C8A96E] text-[#0B0B10] font-bold border-[#C8A96E]'
-                            : 'bg-[#1D1D27] text-[#A5A3AD] border-[#30303A] hover:bg-[#252533] hover:text-[#F3EBDD]'
+                            ? 'bg-[#B89555] text-white font-bold border-[#B89555]'
+                            : 'bg-[#FCF8F7] text-[#57534E] border-[#EEDCD7] hover:bg-[#FDE8E3] hover:text-[#1C1917]'
                         }`}
                       >
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#0B0B10]" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
                         {acc}
                       </button>
                     );
@@ -433,7 +433,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
               </div>
 
               <div>
-                <label htmlFor="extraNotes" className="block text-xs font-bold text-[#A5A3AD] mb-1">
+                <label htmlFor="extraNotes" className="block text-xs font-bold text-[#57534E] mb-1">
                   Additional Notes or Instructions for Gemini AI
                 </label>
                 <textarea
@@ -442,7 +442,7 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Any non-negotiables, cultural traditions, or specific vendors already in mind..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] placeholder:text-[#72707B] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] resize-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] placeholder:text-[#8A827D] focus:outline-none focus:ring-2 focus:ring-[#FF6F61] resize-none"
                 />
               </div>
             </div>
@@ -450,12 +450,12 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
         </div>
 
         {/* Footer Navigation */}
-        <div className="px-6 py-4 border-t border-[#30303A] bg-[#15151D] flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-[#EEDCD7] bg-white flex items-center justify-between">
           <button
             type="button"
             onClick={handlePrev}
             disabled={step === 1 || isLoading}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs font-semibold text-[#A5A3AD] hover:text-[#F3EBDD] hover:bg-[#252533] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EEDCD7] bg-white text-xs font-semibold text-[#57534E] hover:text-[#1C1917] hover:bg-[#FDE8E3] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="w-4 h-4" /> Back
           </button>
@@ -464,22 +464,22 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
             type="button"
             onClick={handleNext}
             disabled={isLoading}
-            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#C8A96E] hover:bg-[#DFC490] disabled:opacity-40 text-[#0B0B10] text-xs font-bold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]"
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#FF6F61] hover:bg-[#E05345] disabled:opacity-40 text-white text-xs font-bold shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61] active:scale-[0.98]"
           >
             {isLoading ? (
               <>
-                <div className="w-3.5 h-3.5 border-2 border-[#0B0B10]/30 border-t-[#0B0B10] rounded-full animate-spin" />
+                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 <span>Generating Master Plan...</span>
               </>
             ) : step === totalSteps ? (
               <>
-                <Sparkles className="w-4 h-4 text-[#0B0B10]" />
+                <Sparkles className="w-4 h-4 text-white" />
                 <span>Generate Master Plan</span>
               </>
             ) : (
               <>
                 <span>Next Step</span>
-                <ChevronRight className="w-4 h-4 text-[#0B0B10]" />
+                <ChevronRight className="w-4 h-4 text-white" />
               </>
             )}
           </button>

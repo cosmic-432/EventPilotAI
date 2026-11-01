@@ -116,36 +116,39 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-extrabold text-[#F3EBDD] tracking-tight">
+      <div className="pb-3 border-b border-[#EEDCD7]">
+        <span className="text-xs uppercase font-mono tracking-widest text-[#B89555] font-semibold">
+          Configuration
+        </span>
+        <h2 className="font-editorial text-2xl sm:text-3xl font-bold text-[#1C1917] tracking-tight mt-0.5">
           Event Settings & Workspace Configuration
         </h2>
-        <p className="text-xs text-[#A5A3AD] mt-0.5">
-          Update event metadata, change currency, manage assumptions, and export backups.
+        <p className="text-sm text-[#57534E] mt-0.5">
+          Update event parameters, change currency, manage assumptions, and export backups.
         </p>
       </div>
 
       {/* Basic Event Settings Card */}
-      <div className="p-6 rounded-3xl bg-[#15151D] border border-[#30303A] shadow-xs space-y-4">
-        <h3 className="text-sm font-bold text-[#F3EBDD]">Event Details & Core Parameters</h3>
+      <div className="p-6 rounded-3xl bg-white border border-[#EEDCD7] shadow-xs space-y-4">
+        <h3 className="font-editorial text-base font-bold text-[#1C1917]">Event Parameters & Identity</h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Event Name</label>
+            <label className="block text-xs font-bold text-[#57534E] mb-1">Event Name</label>
             <input
               type="text"
               value={details.name}
               onChange={(e) => setDetails({ ...details, name: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Event Category</label>
+            <label className="block text-xs font-bold text-[#57534E] mb-1">Event Category</label>
             <select
               value={details.category}
               onChange={(e) => setDetails({ ...details, category: e.target.value as EventCategory })}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
             >
               <option value="wedding">Wedding & Engagement</option>
               <option value="birthday">Birthday & Milestone</option>
@@ -159,46 +162,46 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Target Event Date</label>
+            <label className="block text-xs font-bold text-[#57534E] mb-1">Target Event Date</label>
             <input
               type="date"
               value={details.targetDate}
               onChange={(e) => setDetails({ ...details, targetDate: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Location / City</label>
+            <label className="block text-xs font-bold text-[#57534E] mb-1">Location / City</label>
             <input
               type="text"
               value={details.location}
               onChange={(e) => setDetails({ ...details, location: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Currency Standard</label>
+            <label className="block text-xs font-bold text-[#57534E] mb-1">Currency Standard</label>
             <select
               value={details.currency}
               onChange={(e) => setDetails({ ...details, currency: e.target.value })}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
             >
               {Object.values(SUPPORTED_CURRENCIES).map((c) => (
                 <option key={c.code} value={c.code}>
-                  {c.code} ({c.symbol.trim()}) - {c.useIndianNumbering ? 'Indian notation' : 'Standard'}
+                  {c.code} ({c.symbol.trim()}) - {c.useIndianNumbering ? 'Indian notation (Lakhs/Crores)' : 'Standard'}
                 </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Venue Preference</label>
+            <label className="block text-xs font-bold text-[#57534E] mb-1">Venue Preference</label>
             <select
               value={details.venuePreference}
               onChange={(e) => setDetails({ ...details, venuePreference: e.target.value as VenuePreference })}
-              className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] capitalize"
+              className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61] capitalize"
             >
               <option value="outdoor">Outdoor Lawn</option>
               <option value="indoor">Indoor Banquet</option>
@@ -209,29 +212,29 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         </div>
 
         <div>
-          <label className="block text-xs font-bold text-[#A5A3AD] mb-1">Theme / Atmosphere</label>
+          <label className="block text-xs font-bold text-[#57534E] mb-1">Theme / Atmosphere</label>
           <input
             type="text"
             value={details.styleTheme}
             onChange={(e) => setDetails({ ...details, styleTheme: e.target.value })}
-            className="w-full px-3.5 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-sm text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+            className="w-full px-3.5 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-sm text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
           />
         </div>
 
         <div className="pt-2">
           <button
             onClick={handleSaveDetails}
-            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#C8A96E] hover:bg-[#DFC490] text-[#0B0B10] text-xs font-bold shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-[#FF6F61] hover:bg-[#E05345] text-white text-xs font-bold shadow-xs transition-colors active:scale-[0.98]"
           >
-            <Save className="w-3.5 h-3.5 text-[#0B0B10]" /> Save Changes
+            <Save className="w-3.5 h-3.5 text-white" /> Save Changes
           </button>
         </div>
       </div>
 
       {/* Assumptions Management */}
-      <div className="p-6 rounded-3xl bg-[#15151D] border border-[#30303A] shadow-xs space-y-4">
-        <h3 className="text-sm font-bold text-[#F3EBDD]">Planning Assumptions Tracker</h3>
-        <p className="text-xs text-[#A5A3AD]">
+      <div className="p-6 rounded-3xl bg-white border border-[#EEDCD7] shadow-xs space-y-4">
+        <h3 className="font-editorial text-base font-bold text-[#1C1917]">Planning Assumptions Tracker</h3>
+        <p className="text-xs text-[#57534E]">
           Baseline hypotheses about attendance, tax rates, access hours, and vendor policies.
         </p>
 
@@ -241,15 +244,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
               key={asmp.id}
               className={`p-3 rounded-xl border flex items-start justify-between gap-3 text-xs ${
                 asmp.isConfirmed
-                  ? 'bg-[#1D1D27] border-[#829879]/50'
-                  : 'bg-[#1D1D27] border-[#30303A]'
+                  ? 'bg-[#F0F7F4] border-emerald-200'
+                  : 'bg-[#FCF8F7] border-[#EEDCD7]'
               }`}
             >
               <div className="flex-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#C8A96E] block mb-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#B89555] block mb-0.5 font-mono">
                   {asmp.category}
                 </span>
-                <p className="text-[#F3EBDD] leading-relaxed">{asmp.description}</p>
+                <p className="text-[#1C1917] leading-relaxed">{asmp.description}</p>
               </div>
 
               <div className="flex items-center gap-1.5 shrink-0">
@@ -257,15 +260,15 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   onClick={() => handleToggleAssumption(asmp.id)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-colors ${
                     asmp.isConfirmed
-                      ? 'bg-[#829879] text-[#0B0B10] font-bold'
-                      : 'border border-[#30303A] bg-[#15151D] text-[#F3EBDD] hover:bg-[#252533]'
+                      ? 'bg-[#477D60] text-white font-bold'
+                      : 'border border-[#EEDCD7] bg-white text-[#57534E] hover:bg-[#FDE8E3]'
                   }`}
                 >
                   {asmp.isConfirmed ? 'Confirmed' : 'Mark Confirmed'}
                 </button>
                 <button
                   onClick={() => handleDeleteAssumption(asmp.id)}
-                  className="p-1 rounded-lg text-[#A5A3AD] hover:text-[#E47777]"
+                  className="p-1 rounded-lg text-[#57534E] hover:text-[#B94D5A]"
                   aria-label="Delete assumption"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -282,19 +285,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
             value={newAssumptionCat}
             onChange={(e) => setNewAssumptionCat(e.target.value)}
             placeholder="Category (e.g. Weather, Transit)"
-            className="w-full sm:w-40 px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+            className="w-full sm:w-40 px-3 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-xs text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
           />
           <input
             type="text"
             value={newAssumptionText}
             onChange={(e) => setNewAssumptionText(e.target.value)}
             placeholder="Describe new assumption or policy..."
-            className="flex-1 w-full px-3 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-xs text-[#F3EBDD] focus:outline-none focus:ring-2 focus:ring-[#C8A96E]"
+            className="flex-1 w-full px-3 py-2 rounded-xl border border-[#EEDCD7] bg-[#FCF8F7] text-xs text-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#FF6F61]"
           />
           <button
             onClick={handleAddAssumption}
             disabled={!newAssumptionText.trim()}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#C8A96E] hover:bg-[#DFC490] disabled:opacity-40 text-[#0B0B10] text-xs font-bold whitespace-nowrap"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#FF6F61] hover:bg-[#E05345] disabled:opacity-40 text-white text-xs font-bold whitespace-nowrap active:scale-[0.98]"
           >
             + Add Assumption
           </button>
@@ -302,21 +305,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       {/* Data Backup & Privacy Protection */}
-      <div className="p-6 rounded-3xl bg-[#15151D] border border-[#30303A] shadow-xs space-y-4">
+      <div className="p-6 rounded-3xl bg-white border border-[#EEDCD7] shadow-xs space-y-4">
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-[#829879]" />
-          <h3 className="text-sm font-bold text-[#F3EBDD]">Privacy, Portability & Backups</h3>
+          <ShieldCheck className="w-5 h-5 text-[#477D60]" />
+          <h3 className="font-editorial text-base font-bold text-[#1C1917]">Privacy, Portability & Backups</h3>
         </div>
-        <p className="text-xs text-[#A5A3AD] leading-relaxed">
+        <p className="text-xs text-[#57534E] leading-relaxed">
           EventPilot AI operates with client-side zero-leak storage. Your plans, vendor notes, and guest numbers are saved locally in your browser storage. You can download complete JSON files to transfer plans across machines or keep permanent offline records.
         </p>
 
         <div className="flex flex-wrap items-center gap-3 pt-2">
           <button
             onClick={handleExportJson}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] hover:bg-[#252533] text-[#F3EBDD] text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EEDCD7] bg-white hover:bg-[#FDE8E3] text-[#1C1917] text-xs font-semibold shadow-2xs"
           >
-            <Download className="w-4 h-4 text-[#C8A96E]" />
+            <Download className="w-4 h-4 text-[#B89555]" />
             <span>Export Plan as JSON</span>
           </button>
 
@@ -329,18 +332,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] hover:bg-[#252533] text-[#F3EBDD] text-xs font-semibold"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[#EEDCD7] bg-white hover:bg-[#FDE8E3] text-[#1C1917] text-xs font-semibold shadow-2xs"
           >
-            <Upload className="w-4 h-4 text-[#C8A96E]" />
+            <Upload className="w-4 h-4 text-[#FF6F61]" />
             <span>Import Plan from JSON</span>
           </button>
         </div>
       </div>
 
       {/* Danger Zone: Delete Plan */}
-      <div className="p-6 rounded-3xl bg-[#15151D] border border-[#E47777]/40 shadow-xs space-y-3">
-        <h3 className="text-sm font-bold text-[#E47777]">Danger Zone</h3>
-        <p className="text-xs text-[#A5A3AD]">
+      <div className="p-6 rounded-3xl bg-[#FFF2EF] border border-[#B94D5A]/30 shadow-xs space-y-3">
+        <h3 className="font-editorial text-base font-bold text-[#B94D5A]">Danger Zone</h3>
+        <p className="text-xs text-[#57534E]">
           Permanently delete this event plan from local storage. This action cannot be undone.
         </p>
 
@@ -348,13 +351,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
           <div className="flex items-center gap-2 pt-1">
             <button
               onClick={() => onDeletePlan(plan.id)}
-              className="px-4 py-2 rounded-xl bg-[#E47777] hover:bg-[#E47777]/80 text-[#0B0B10] text-xs font-bold"
+              className="px-4 py-2 rounded-xl bg-[#B94D5A] hover:bg-[#9f3f4b] text-white text-xs font-bold shadow-xs"
             >
               Yes, Delete Permanently
             </button>
             <button
               onClick={() => setShowDeleteConfirm(false)}
-              className="px-4 py-2 rounded-xl border border-[#30303A] bg-[#1D1D27] text-[#A5A3AD] hover:text-[#F3EBDD] text-xs font-semibold"
+              className="px-4 py-2 rounded-xl border border-[#EEDCD7] bg-white text-[#57534E] hover:text-[#1C1917] text-xs font-semibold"
             >
               Cancel
             </button>
@@ -362,7 +365,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         ) : (
           <button
             onClick={() => setShowDeleteConfirm(true)}
-            className="px-4 py-2 rounded-xl border border-[#E47777]/50 bg-[#1D1D27] hover:bg-[rgba(228,119,119,0.15)] text-[#E47777] text-xs font-bold transition-colors inline-flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl border border-[#B94D5A]/40 bg-white hover:bg-[#FFF2EF] text-[#B94D5A] text-xs font-bold transition-colors inline-flex items-center gap-1.5"
           >
             <Trash2 className="w-4 h-4" /> Delete Event Plan
           </button>

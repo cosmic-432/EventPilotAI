@@ -24,43 +24,43 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
       className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-md w-full px-4 pointer-events-none no-print"
     >
       {toasts.map((toast) => {
-        let bg = 'bg-[#15151D] text-[#F3EBDD] border-[#30303A]';
+        let border = 'border-[#EEDCD7]';
         let Icon = Info;
-        let iconColor = 'text-[#C8A96E]';
+        let iconColor = 'text-[#FF6F61]';
 
         if (toast.type === 'success') {
-          bg = 'bg-[#15151D] text-[#F3EBDD] border-[#829879]/50';
+          border = 'border-emerald-200 bg-[#F0F7F4]/40';
           Icon = CheckCircle2;
-          iconColor = 'text-[#829879]';
+          iconColor = 'text-[#477D60]';
         } else if (toast.type === 'warning') {
-          bg = 'bg-[#15151D] text-[#F3EBDD] border-[#E4B66A]/50';
+          border = 'border-amber-200 bg-[#FFF8ED]/40';
           Icon = AlertTriangle;
-          iconColor = 'text-[#E4B66A]';
+          iconColor = 'text-[#A87531]';
         } else if (toast.type === 'error') {
-          bg = 'bg-[#15151D] text-[#F3EBDD] border-[#E47777]/50';
+          border = 'border-rose-200 bg-[#FFF2EF]/40';
           Icon = AlertCircle;
-          iconColor = 'text-[#E47777]';
+          iconColor = 'text-[#B94D5A]';
         } else if (toast.type === 'info') {
-          bg = 'bg-[#15151D] text-[#F3EBDD] border-[#C8A96E]/50';
+          border = 'border-[#FF9A8B] bg-[#FFF2EF]/40';
           Icon = Info;
-          iconColor = 'text-[#C8A96E]';
+          iconColor = 'text-[#FF6F61]';
         }
 
         return (
           <div
             key={toast.id}
-            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-xl border shadow-2xl transition-all duration-200 ${bg}`}
+            className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-white border shadow-xl transition-all duration-200 ${border}`}
           >
             <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${iconColor}`} />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-[#F3EBDD]">{toast.title}</p>
+              <p className="text-sm font-semibold text-[#1C1917]">{toast.title}</p>
               {toast.message && (
-                <p className="text-xs text-[#A5A3AD] mt-0.5 leading-relaxed">{toast.message}</p>
+                <p className="text-xs text-[#57534E] mt-0.5 leading-relaxed">{toast.message}</p>
               )}
             </div>
             <button
               onClick={() => onDismiss(toast.id)}
-              className="text-[#A5A3AD] hover:text-[#F3EBDD] p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]"
+              className="text-[#8A827D] hover:text-[#1C1917] p-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6F61]"
               aria-label="Dismiss notification"
             >
               <X className="w-4 h-4" />

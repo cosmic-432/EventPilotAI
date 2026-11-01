@@ -46,6 +46,7 @@ export interface EventDetails {
   accessibilityRequirements: string[];
   priorities: string[];
   naturalLanguagePrompt?: string;
+  status?: 'active' | 'draft' | 'confirmed' | 'archived';
   createdAt: string;
   updatedAt: string;
 }

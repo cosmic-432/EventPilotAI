@@ -1,7 +1,7 @@
 /**
  * Event Repository Layer
- * Manages persistent local storage with schema versioning, multi-event support,
- * autosave, undo/redo history, and JSON export/import.
+ * Manages persistent local storage with multi-event support, planning history,
+ * duplication, renaming, archiving, autosave, undo/redo, and JSON export/import.
  */
 
 import { EventPlan } from '../types/event';
@@ -18,6 +18,11 @@ export interface PlanIndexEntry {
   targetDate: string;
   currency: string;
   updatedAt: string;
+  totalBudgetMinor?: number;
+  guestCount?: number;
+  location?: string;
+  status?: 'active' | 'draft' | 'confirmed' | 'archived';
+  progressPercentage?: number;
 }
 
 export class EventRepository {
@@ -25,13 +30,14 @@ export class EventRepository {
   private futureStack: EventPlan[] = [];
 
   /**
-   * Retrieves list of all stored event plans
+   * Retrieves list of all stored event plans from index
    */
   public listPlans(): PlanIndexEntry[] {
     try {
       const raw = localStorage.getItem(STORAGE_KEY_INDEX);
       if (!raw) return [];
-      return JSON.parse(raw);
+      const list = JSON.parse(raw) as PlanIndexEntry[];
+      return Array.isArray(list) ? list : [];
     } catch {
       return [];
     }
@@ -44,10 +50,11 @@ export class EventRepository {
     try {
       const activeId = localStorage.getItem(STORAGE_KEY_ACTIVE_PLAN_ID);
       if (!activeId) {
-        // Fallback: load first from index if available
+        // Fallback: load first non-archived from index if available
         const index = this.listPlans();
         if (index.length > 0) {
-          return this.getPlanById(index[0].id);
+          const first = index.find((p) => p.status !== 'archived') || index[0];
+          return this.getPlanById(first.id);
         }
         return null;
       }
@@ -74,6 +81,19 @@ export class EventRepository {
   }
 
   /**
+   * Loads all plans from storage (for Planning History view)
+   */
+  public getAllPlans(): EventPlan[] {
+    const index = this.listPlans();
+    const plans: EventPlan[] = [];
+    for (const entry of index) {
+      const p = this.getPlanById(entry.id);
+      if (p) plans.push(p);
+    }
+    return plans;
+  }
+
+  /**
    * Saves a plan to storage, updates index, and manages undo history
    */
   public savePlan(plan: EventPlan, recordHistory = true): boolean {
@@ -88,7 +108,6 @@ export class EventRepository {
           if (this.historyStack.length > MAX_HISTORY_STEPS) {
             this.historyStack.shift();
           }
-          // Clear redo stack on new distinct action
           this.futureStack = [];
         }
       }
@@ -107,23 +126,63 @@ export class EventRepository {
       // Set as active plan
       localStorage.setItem(STORAGE_KEY_ACTIVE_PLAN_ID, plan.id);
 
-      // Update index
-      const index = this.listPlans().filter((p) => p.id !== plan.id);
-      index.unshift({
+      // Update index with full search/filter attributes
+      const existingIndex = this.listPlans();
+      const existingEntry = existingIndex.find((p) => p.id === plan.id);
+      const filteredIndex = existingIndex.filter((p) => p.id !== plan.id);
+
+      const tasks = updatedPlan.timeline?.tasks || [];
+      const completedTasks = tasks.filter((t) => t.status === 'completed').length;
+      const progressPercentage = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+
+      const newEntry: PlanIndexEntry = {
         id: updatedPlan.id,
         name: updatedPlan.eventDetails.name,
         category: updatedPlan.eventDetails.category,
         targetDate: updatedPlan.eventDetails.targetDate,
         currency: updatedPlan.budget.currency,
         updatedAt: updatedPlan.updatedAt,
-      });
-      localStorage.setItem(STORAGE_KEY_INDEX, JSON.stringify(index));
+        totalBudgetMinor: updatedPlan.budget.totalBudgetMinor,
+        guestCount: updatedPlan.eventDetails.guestCount,
+        location: updatedPlan.eventDetails.location,
+        status: updatedPlan.eventDetails.status || existingEntry?.status || 'active',
+        progressPercentage,
+      };
+
+      filteredIndex.unshift(newEntry);
+      localStorage.setItem(STORAGE_KEY_INDEX, JSON.stringify(filteredIndex));
 
       return true;
     } catch (err) {
       console.error('Failed to save event plan:', err);
       return false;
     }
+  }
+
+  /**
+   * Creates a new plan, ensuring a guaranteed unique ID so existing events are never overwritten
+   */
+  public createNewPlan(plan: EventPlan): EventPlan {
+    const timestamp = Date.now();
+    const randomSuffix = Math.random().toString(36).substring(2, 7);
+    const uniqueId = `plan_${timestamp}_${randomSuffix}`;
+
+    const freshPlan: EventPlan = {
+      ...plan,
+      id: uniqueId,
+      eventDetails: {
+        ...plan.eventDetails,
+        id: uniqueId,
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.savePlan(freshPlan, false);
+    return freshPlan;
   }
 
   /**
@@ -136,6 +195,68 @@ export class EventRepository {
     this.historyStack = [];
     this.futureStack = [];
     return true;
+  }
+
+  /**
+   * Renames an event plan
+   */
+  public renamePlan(id: string, newName: string): boolean {
+    const plan = this.getPlanById(id);
+    if (!plan || !newName.trim()) return false;
+    plan.eventDetails.name = newName.trim();
+    return this.savePlan(plan, true);
+  }
+
+  /**
+   * Duplicates an existing event plan with an independent copy
+   */
+  public duplicatePlan(id: string): EventPlan | null {
+    const source = this.getPlanById(id);
+    if (!source) return null;
+
+    const timestamp = Date.now();
+    const newId = `plan_${timestamp}_copy_${Math.random().toString(36).substring(2, 6)}`;
+    const copyName = `${source.eventDetails.name} (Copy)`;
+
+    const duplicatedPlan: EventPlan = {
+      ...JSON.parse(JSON.stringify(source)),
+      id: newId,
+      eventDetails: {
+        ...source.eventDetails,
+        id: newId,
+        name: copyName,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.savePlan(duplicatedPlan, false);
+    return duplicatedPlan;
+  }
+
+  /**
+   * Toggles archive status of a plan
+   */
+  public toggleArchivePlan(id: string): boolean {
+    const plan = this.getPlanById(id);
+    if (!plan) return false;
+    const currentStatus = plan.eventDetails.status || 'active';
+    const nextStatus = currentStatus === 'archived' ? 'active' : 'archived';
+    plan.eventDetails.status = nextStatus;
+    return this.savePlan(plan, false);
+  }
+
+  /**
+   * Updates plan status
+   */
+  public updatePlanStatus(id: string, status: 'active' | 'draft' | 'confirmed' | 'archived'): boolean {
+    const plan = this.getPlanById(id);
+    if (!plan) return false;
+    plan.eventDetails.status = status;
+    return this.savePlan(plan, true);
   }
 
   /**
@@ -172,7 +293,6 @@ export class EventRepository {
     const previous = this.historyStack.pop();
     if (!previous) return null;
 
-    // Push current to future stack
     this.futureStack.push(JSON.parse(JSON.stringify(currentPlan)));
     this.savePlan(previous, false);
     return previous;
@@ -186,7 +306,6 @@ export class EventRepository {
     const next = this.futureStack.pop();
     if (!next) return null;
 
-    // Push current to history stack
     this.historyStack.push(JSON.parse(JSON.stringify(currentPlan)));
     this.savePlan(next, false);
     return next;
