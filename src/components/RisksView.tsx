@@ -7,7 +7,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { EventPlan, RiskRecommendation } from '../types/event';
-import { generateId } from '../utils/validation';
+import { generateId, toRiskCategory, toRiskSeverity, toRiskProbability } from '../utils/validation';
 
 interface RisksViewProps {
   plan: EventPlan;
@@ -221,10 +221,11 @@ export const RisksView: React.FC<RisksViewProps> = ({ plan, onUpdatePlan }) => {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
+                  <label htmlFor="risk-category-select" className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
                   <select
+                    id="risk-category-select"
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, category: toRiskCategory(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="weather">Weather</option>
@@ -237,10 +238,11 @@ export const RisksView: React.FC<RisksViewProps> = ({ plan, onUpdatePlan }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Severity</label>
+                  <label htmlFor="risk-severity-select" className="block text-xs font-bold text-[#74616B] mb-1">Severity</label>
                   <select
+                    id="risk-severity-select"
                     value={formData.severity}
-                    onChange={(e) => setFormData({ ...formData, severity: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, severity: toRiskSeverity(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="high">High</option>
@@ -250,10 +252,11 @@ export const RisksView: React.FC<RisksViewProps> = ({ plan, onUpdatePlan }) => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Probability</label>
+                  <label htmlFor="risk-prob-select" className="block text-xs font-bold text-[#74616B] mb-1">Probability</label>
                   <select
+                    id="risk-prob-select"
                     value={formData.probability}
-                    onChange={(e) => setFormData({ ...formData, probability: e.target.value as any })}
+                    onChange={(e) => setFormData({ ...formData, probability: toRiskProbability(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="high">High</option>

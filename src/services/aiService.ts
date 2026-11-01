@@ -107,9 +107,9 @@ export class AiService {
         notice: data.notice,
         source: data.source || 'gemini',
       };
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         throw new Error('Request was cancelled or timed out after 60 seconds.');
       }
       throw err;
@@ -124,7 +124,7 @@ export class AiService {
     currentPlan: EventPlan,
     newConstraints: string,
     signal?: AbortSignal
-  ): Promise<any> {
+  ): Promise<unknown> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 45000);
 
@@ -163,9 +163,9 @@ export class AiService {
 
       const data = await response.json();
       return data.sectionData;
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearTimeout(timeoutId);
-      if (err.name === 'AbortError') {
+      if (err instanceof Error && err.name === 'AbortError') {
         throw new Error('Section regeneration request timed out or was cancelled.');
       }
       throw err;

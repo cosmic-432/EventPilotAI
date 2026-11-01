@@ -271,4 +271,41 @@ describe('EventRepository Storage Engine', () => {
     const badPlan = repo.getPlanById('bad');
     expect(badPlan).toBeNull();
   });
+
+  it('handles localStorage quota exceeded simulation gracefully without crashing', () => {
+    const originalSetItem = localStorage.setItem;
+    // Simulate QuotaExceededError
+    localStorage.setItem = () => {
+      const quotaErr = new Error('The quota has been exceeded.');
+      quotaErr.name = 'QuotaExceededError';
+      throw quotaErr;
+    };
+
+    const samplePlan = createSamplePlan();
+    expect(() => {
+      // savePlan catches storage errors internally
+      repo.savePlan(samplePlan);
+    }).not.toThrow();
+
+    // Restore original setItem
+    localStorage.setItem = originalSetItem;
+  });
+
+  it('automatically sets next available plan as active when current active plan is deleted', () => {
+    const plan1 = repo.createNewPlan(createSamplePlan());
+    const plan2 = repo.createNewPlan({
+      ...createSamplePlan(),
+      eventDetails: { ...createSamplePlan().eventDetails, name: 'Second Gala' },
+    });
+
+    expect(repo.getActivePlan()?.id).toBe(plan2.id);
+
+    // Delete active plan
+    repo.deletePlan(plan2.id);
+
+    // Active plan should automatically switch to plan1
+    const activeAfterDelete = repo.getActivePlan();
+    expect(activeAfterDelete?.id).toBe(plan1.id);
+    expect(activeAfterDelete?.eventDetails.name).toBe('Royale Pune Wedding');
+  });
 });

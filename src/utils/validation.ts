@@ -9,13 +9,17 @@ import {
   BudgetItem,
   TimelineTask,
   VendorItem,
-  ThemeIdea,
-  RiskRecommendation,
   AssumptionItem,
   EventCategory,
   VenuePreference,
   PriorityLevel,
+  PaymentStatus,
+  BookingStatus,
+  RiskCategory,
+  RiskProbability,
+  RiskSeverity,
 } from '../types/event';
+import { RawAiGeneratedPlan, isRecord } from '../types/api';
 import { toMinorUnits } from './currency';
 import { getTodayIso, calculateDateBeforeEvent } from './timeline';
 
@@ -28,6 +32,55 @@ export function sanitizeText(input: unknown): string {
   return input
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
     .trim();
+}
+
+export function toPriorityLevel(val: unknown, fallback: PriorityLevel = 'medium'): PriorityLevel {
+  if (val === 'critical' || val === 'high' || val === 'medium' || val === 'low' || val === 'nice_to_have') {
+    return val;
+  }
+  return fallback;
+}
+
+export function toPaymentStatus(val: unknown): PaymentStatus {
+  if (val === 'unpaid' || val === 'deposit_paid' || val === 'paid_in_full' || val === 'waived') {
+    return val;
+  }
+  return 'unpaid';
+}
+
+export function toBookingStatus(val: unknown): BookingStatus {
+  if (
+    val === 'not_started' ||
+    val === 'contacted' ||
+    val === 'quotation_received' ||
+    val === 'negotiating' ||
+    val === 'confirmed' ||
+    val === 'cancelled'
+  ) {
+    return val;
+  }
+  return 'not_started';
+}
+
+export function toRiskCategory(val: unknown): RiskCategory {
+  if (val === 'weather' || val === 'vendor' || val === 'budget' || val === 'logistics' || val === 'compliance' || val === 'technical') {
+    return val;
+  }
+  return 'logistics';
+}
+
+export function toRiskProbability(val: unknown): RiskProbability {
+  if (val === 'low' || val === 'medium' || val === 'high') {
+    return val;
+  }
+  return 'medium';
+}
+
+export function toRiskSeverity(val: unknown): RiskSeverity {
+  if (val === 'low' || val === 'medium' || val === 'high') {
+    return val;
+  }
+  return 'medium';
 }
 
 /**
@@ -97,7 +150,7 @@ export function validateEventInput(data: {
  * Validates and safely normalizes an AI generated plan into our strict EventPlan type
  */
 export function normalizeAiPlan(
-  rawAiData: any,
+  rawAiData: unknown,
   userInputs: {
     id?: string;
     name: string;
@@ -115,22 +168,29 @@ export function normalizeAiPlan(
     naturalLanguagePrompt?: string;
   }
 ): EventPlan {
+  const raw = isRecord(rawAiData) ? (rawAiData as RawAiGeneratedPlan) : null;
   const now = new Date().toISOString();
   const planId = userInputs.id || generateId('plan');
 
   // 1. Event Details
+  const rawEvtName = typeof raw?.eventDetails?.name === 'string' ? raw.eventDetails.name : userInputs.name;
+  const rawEvtLoc = typeof raw?.eventDetails?.location === 'string' ? raw.eventDetails.location : userInputs.location;
+  const rawEvtTheme = typeof raw?.eventDetails?.styleTheme === 'string'
+    ? raw.eventDetails.styleTheme
+    : userInputs.styleTheme || 'Elegant & Modern';
+
   const eventDetails: EventDetails = {
     id: generateId('evt'),
-    name: sanitizeText(rawAiData?.eventDetails?.name || userInputs.name),
-    category: (rawAiData?.eventDetails?.category || userInputs.category) as EventCategory,
+    name: sanitizeText(rawEvtName),
+    category: userInputs.category,
     targetDate: userInputs.targetDate,
-    location: sanitizeText(rawAiData?.eventDetails?.location || userInputs.location),
+    location: sanitizeText(rawEvtLoc),
     venueStatus: 'need_to_find',
-    venuePreference: (userInputs.venuePreference || 'flexible') as VenuePreference,
+    venuePreference: userInputs.venuePreference || 'flexible',
     guestCount: Math.max(1, Number(userInputs.guestCount) || 100),
     totalBudgetMinor: userInputs.totalBudgetMinor,
     currency: userInputs.currency || 'INR',
-    styleTheme: sanitizeText(rawAiData?.eventDetails?.styleTheme || userInputs.styleTheme || 'Elegant & Modern'),
+    styleTheme: sanitizeText(rawEvtTheme),
     dietaryRequirements: Array.isArray(userInputs.dietaryRequirements)
       ? userInputs.dietaryRequirements
       : [],
@@ -144,13 +204,14 @@ export function normalizeAiPlan(
   };
 
   // 2. Assumptions
-  const assumptions: AssumptionItem[] = Array.isArray(rawAiData?.assumptions)
-    ? rawAiData.assumptions.map((a: any, idx: number) => ({
-        id: a?.id || generateId(`asmp_${idx}`),
-        category: sanitizeText(a?.category || 'General'),
-        description: sanitizeText(a?.description || 'Standard assumption'),
-        isConfirmed: Boolean(a?.isConfirmed),
-        userNote: sanitizeText(a?.userNote || ''),
+  const rawAssumptions = Array.isArray(raw?.assumptions) ? raw.assumptions : null;
+  const assumptions: AssumptionItem[] = rawAssumptions && rawAssumptions.length > 0
+    ? rawAssumptions.map((a, idx) => ({
+        id: typeof a.id === 'string' ? a.id : generateId(`asmp_${idx}`),
+        category: sanitizeText(a.category || 'General'),
+        description: sanitizeText(a.description || 'Standard assumption'),
+        isConfirmed: Boolean(a.isConfirmed),
+        userNote: sanitizeText(a.userNote || ''),
       }))
     : [
         {
@@ -168,31 +229,61 @@ export function normalizeAiPlan(
       ];
 
   // 3. Budget Items
-  const budgetItems: BudgetItem[] = Array.isArray(rawAiData?.budget?.items)
-    ? rawAiData.budget.items.map((b: any, idx: number) => {
-        const estAmount = typeof b?.estimatedAmountMajor === 'number'
-          ? toMinorUnits(b.estimatedAmountMajor, userInputs.currency)
-          : typeof b?.estimatedAmountMinor === 'number'
-          ? b.estimatedAmountMinor
-          : 0;
-        return {
-          id: b?.id || generateId(`bgt_${idx}`),
-          category: sanitizeText(b?.category || 'General'),
-          description: sanitizeText(b?.description || 'Budget line item'),
-          estimatedAmountMinor: Math.max(0, Math.round(estAmount)),
-          actualAmountMinor: Math.max(0, Math.round(b?.actualAmountMinor || 0)),
-          quantity: Math.max(1, Number(b?.quantity) || 1),
-          unitCostMinor: Math.max(0, Math.round(b?.unitCostMinor || estAmount)),
-          priority: (b?.priority || 'medium') as PriorityLevel,
-          paymentStatus: b?.paymentStatus || 'unpaid',
-          notes: sanitizeText(b?.notes || ''),
-          isAiEstimated: true,
-        };
-      })
-    : [];
+  const rawBudgetItems = Array.isArray(raw?.budget?.items) && raw.budget.items.length > 0
+    ? raw.budget.items
+    : [
+        {
+          id: 'bgt_fallback_1',
+          category: 'Venue & Staging',
+          description: 'Primary event space rental & setup',
+          estimatedAmountMinor: Math.round(userInputs.totalBudgetMinor * 0.35),
+          quantity: 1,
+          priority: 'critical' as const,
+        },
+        {
+          id: 'bgt_fallback_2',
+          category: 'Catering & Dining',
+          description: 'Food & beverage service per head',
+          estimatedAmountMinor: Math.round(userInputs.totalBudgetMinor * 0.30),
+          quantity: userInputs.guestCount,
+          priority: 'critical' as const,
+        },
+        {
+          id: 'bgt_fallback_3',
+          category: 'Decor & Floral',
+          description: 'Ambient lighting and floral styling',
+          estimatedAmountMinor: Math.round(userInputs.totalBudgetMinor * 0.15),
+          quantity: 1,
+          priority: 'high' as const,
+        },
+      ];
 
-  const contingencyPercentage = typeof rawAiData?.budget?.contingencyPercentage === 'number'
-    ? Math.max(0, Math.min(30, rawAiData.budget.contingencyPercentage))
+  const budgetItems: BudgetItem[] = rawBudgetItems.map((b, idx) => {
+    const rawEst = typeof b.estimatedAmountMajor === 'number'
+      ? toMinorUnits(b.estimatedAmountMajor, userInputs.currency)
+      : typeof b.estimatedAmountMinor === 'number'
+      ? b.estimatedAmountMinor
+      : 0;
+    const estAmount = rawEst > 0 ? rawEst : 100000;
+
+    return {
+      id: typeof b.id === 'string' ? b.id : generateId(`bgt_${idx}`),
+      category: sanitizeText(b.category || 'General'),
+      description: sanitizeText(b.description || 'Budget line item'),
+      estimatedAmountMinor: Math.max(0, Math.round(estAmount)),
+      actualAmountMinor: Math.max(0, Math.round(b.actualAmountMinor || 0)),
+      quantity: Math.max(1, Number(b.quantity) || 1),
+      unitCostMinor: Math.max(0, Math.round(b.unitCostMinor || estAmount)),
+      priority: toPriorityLevel(b.priority, 'medium'),
+      paymentStatus: toPaymentStatus(b.paymentStatus),
+      notes: sanitizeText(b.notes || ''),
+      isAiEstimated: true,
+    };
+  });
+
+  const rawContingency = raw?.budget?.contingencyPercentage;
+  const contingencyPercentage = typeof rawContingency === 'number'
+    ? Math.max(0, Math.min(30, rawContingency))
     : 10;
 
   const contingencyReserveMinor = Math.round(
@@ -200,110 +291,132 @@ export function normalizeAiPlan(
   );
 
   // 4. Timeline Tasks
-  const timelineTasks: TimelineTask[] = Array.isArray(rawAiData?.timeline?.tasks)
-    ? rawAiData.timeline.tasks.map((t: any, idx: number) => {
-        const daysBefore = typeof t?.daysBeforeEvent === 'number' ? Math.max(0, t.daysBeforeEvent) : 14;
-        const calculatedDueDate = t?.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate)
-          ? t.dueDate
-          : calculateDateBeforeEvent(userInputs.targetDate, daysBefore);
+  const rawTasks = Array.isArray(raw?.timeline?.tasks) && raw.timeline.tasks.length > 0
+    ? raw.timeline.tasks
+    : [
+        {
+          id: 'tsk_fallback_1',
+          title: 'Finalize Event Venue & Contract',
+          category: 'Venue',
+          daysBeforeEvent: 45,
+          priority: 'critical' as const,
+        },
+        {
+          id: 'tsk_fallback_2',
+          title: 'Confirm Catering Menu & Headcount',
+          category: 'Catering',
+          daysBeforeEvent: 20,
+          priority: 'high' as const,
+        },
+        {
+          id: 'tsk_fallback_3',
+          title: 'Final Sound & Stage Rehearsal',
+          category: 'Production',
+          daysBeforeEvent: 2,
+          priority: 'high' as const,
+        },
+      ];
 
-        return {
-          id: t?.id || generateId(`tsk_${idx}`),
-          title: sanitizeText(t?.title || `Task #${idx + 1}`),
-          description: sanitizeText(t?.description || ''),
-          category: sanitizeText(t?.category || 'Planning'),
-          dueDate: calculatedDueDate,
-          daysBeforeEvent: daysBefore,
-          priority: (t?.priority || 'medium') as PriorityLevel,
-          status: 'todo',
-          dependencies: Array.isArray(t?.dependencies) ? t.dependencies : [],
-          notes: sanitizeText(t?.notes || ''),
-          isAiGenerated: true,
-        };
-      })
-    : [];
+  const timelineTasks: TimelineTask[] = rawTasks.map((t, idx) => {
+    const daysBefore = typeof t.daysBeforeEvent === 'number' ? Math.max(0, t.daysBeforeEvent) : 14;
+    const calculatedDueDate = t.dueDate && /^\d{4}-\d{2}-\d{2}$/.test(t.dueDate)
+      ? t.dueDate
+      : calculateDateBeforeEvent(userInputs.targetDate, daysBefore);
+
+    return {
+      id: typeof t.id === 'string' ? t.id : generateId(`tsk_${idx}`),
+      title: sanitizeText(t.title || `Task #${idx + 1}`),
+      description: sanitizeText(t.description || ''),
+      category: sanitizeText(t.category || 'Planning'),
+      dueDate: calculatedDueDate,
+      daysBeforeEvent: daysBefore,
+      priority: toPriorityLevel(t.priority, 'medium'),
+      status: 'todo',
+      dependencies: Array.isArray(t.dependencies) ? t.dependencies : [],
+      notes: sanitizeText(t.notes || ''),
+      isAiGenerated: true,
+    };
+  });
 
   // 5. Vendor Guidance Items
-  const vendorItems: VendorItem[] = Array.isArray(rawAiData?.vendors?.items)
-    ? rawAiData.vendors.items.map((v: any, idx: number) => {
-        const estCost = typeof v?.estimatedCostMajor === 'number'
-          ? toMinorUnits(v.estimatedCostMajor, userInputs.currency)
-          : typeof v?.estimatedCostMinor === 'number'
-          ? v.estimatedCostMinor
-          : 0;
+  const rawVendors = Array.isArray(raw?.vendors?.items) ? raw.vendors.items : [];
+  const vendorItems: VendorItem[] = rawVendors.map((v, idx) => {
+    const estCost = typeof v.estimatedCostMajor === 'number'
+      ? toMinorUnits(v.estimatedCostMajor, userInputs.currency)
+      : typeof v.estimatedCostMinor === 'number'
+      ? v.estimatedCostMinor
+      : 0;
 
-        return {
-          id: v?.id || generateId(`vnd_${idx}`),
-          category: sanitizeText(v?.category || 'Vendor'),
-          title: sanitizeText(v?.title || 'Vendor Service'),
-          selectionGuidance: sanitizeText(v?.selectionGuidance || 'Recommended selection criteria.'),
-          estimatedCostMinor: Math.max(0, Math.round(estCost)),
-          targetBookingDate: v?.targetBookingDate || calculateDateBeforeEvent(userInputs.targetDate, 30),
-          bookingStatus: 'not_started',
-          notes: sanitizeText(v?.notes || ''),
-          selectionCriteria: Array.isArray(v?.selectionCriteria)
-            ? v.selectionCriteria.map(sanitizeText)
-            : ['Check portfolio & past reviews', 'Request written contract and cancellation policy'],
-        };
-      })
-    : [];
+    return {
+      id: typeof v.id === 'string' ? v.id : generateId(`vnd_${idx}`),
+      category: sanitizeText(v.category || 'Vendor'),
+      title: sanitizeText(v.title || 'Vendor Service'),
+      selectionGuidance: sanitizeText(v.selectionGuidance || 'Recommended selection criteria.'),
+      estimatedCostMinor: Math.max(0, Math.round(estCost)),
+      targetBookingDate: v.targetBookingDate || calculateDateBeforeEvent(userInputs.targetDate, 30),
+      bookingStatus: toBookingStatus(v.bookingStatus),
+      notes: sanitizeText(v.notes || ''),
+      selectionCriteria: Array.isArray(v.selectionCriteria)
+        ? v.selectionCriteria.map(sanitizeText)
+        : ['Check portfolio & past reviews', 'Request written contract and cancellation policy'],
+    };
+  });
 
   // 6. Guest Logistics
+  const rawGuestPlan = raw?.guestPlan;
   const guestPlan = {
-    estimatedGuests: Math.max(1, Number(rawAiData?.guestPlan?.estimatedGuests) || userInputs.guestCount),
-    cateringPerHeadMinor: typeof rawAiData?.guestPlan?.cateringPerHeadMajor === 'number'
-      ? toMinorUnits(rawAiData.guestPlan.cateringPerHeadMajor, userInputs.currency)
-      : Math.round(userInputs.totalBudgetMinor * 0.35 / (userInputs.guestCount || 1)),
-    estimatedSpaceSqFt: Number(rawAiData?.guestPlan?.estimatedSpaceSqFt) || userInputs.guestCount * 25,
-    seatingStyle: sanitizeText(rawAiData?.guestPlan?.seatingStyle || 'Banquet & Round Tables'),
-    dietaryBreakdown: rawAiData?.guestPlan?.dietaryBreakdown || {
+    estimatedGuests: Math.max(1, Number(rawGuestPlan?.estimatedGuests) || userInputs.guestCount),
+    cateringPerHeadMinor: typeof rawGuestPlan?.cateringPerHeadMajor === 'number'
+      ? toMinorUnits(rawGuestPlan.cateringPerHeadMajor, userInputs.currency)
+      : Math.round((userInputs.totalBudgetMinor * 0.35) / (userInputs.guestCount || 1)),
+    estimatedSpaceSqFt: Number(rawGuestPlan?.estimatedSpaceSqFt) || userInputs.guestCount * 25,
+    seatingStyle: sanitizeText(rawGuestPlan?.seatingStyle || 'Banquet & Round Tables'),
+    dietaryBreakdown: rawGuestPlan?.dietaryBreakdown || {
       'Vegetarian': Math.round(userInputs.guestCount * 0.6),
       'Standard Non-Veg': Math.round(userInputs.guestCount * 0.35),
       'Special / Gluten-free / Jain': Math.round(userInputs.guestCount * 0.05),
     },
-    accessibilityProvisions: Array.isArray(rawAiData?.guestPlan?.accessibilityProvisions)
-      ? rawAiData.guestPlan.accessibilityProvisions.map(sanitizeText)
+    accessibilityProvisions: Array.isArray(rawGuestPlan?.accessibilityProvisions)
+      ? rawGuestPlan.accessibilityProvisions.map(sanitizeText)
       : ['Wheelchair accessible entrance and ramps', 'Reserved front-row seating for elders'],
-    logisticsNotes: Array.isArray(rawAiData?.guestPlan?.logisticsNotes)
-      ? rawAiData.guestPlan.logisticsNotes.map(sanitizeText)
+    logisticsNotes: Array.isArray(rawGuestPlan?.logisticsNotes)
+      ? rawGuestPlan.logisticsNotes.map(sanitizeText)
       : ['Valet / dedicated parking space for guests', 'Guest welcoming desk and coat check'],
   };
 
   // 7. Ideas and Themes
+  const rawThemes = Array.isArray(raw?.ideas?.themeConcepts) ? raw.ideas.themeConcepts : [];
   const ideas = {
-    themeConcepts: Array.isArray(rawAiData?.ideas?.themeConcepts)
-      ? rawAiData.ideas.themeConcepts.map((th: any, idx: number) => ({
-          id: th?.id || generateId(`thm_${idx}`),
-          title: sanitizeText(th?.title || 'Signature Theme'),
-          vibe: sanitizeText(th?.vibe || 'Warm & Celebratory'),
-          description: sanitizeText(th?.description || ''),
-          colorPalette: Array.isArray(th?.colorPalette) ? th.colorPalette.map(sanitizeText) : ['#B8860B', '#FFF8DC', '#2E8B57'],
-          budgetImpact: (th?.budgetImpact || 'medium') as 'low' | 'medium' | 'high',
-          culturalContext: sanitizeText(th?.culturalContext || ''),
-        }))
-      : [],
-    sustainabilitySuggestions: Array.isArray(rawAiData?.ideas?.sustainabilitySuggestions)
-      ? rawAiData.ideas.sustainabilitySuggestions.map(sanitizeText)
+    themeConcepts: rawThemes.map((th, idx) => ({
+      id: typeof th.id === 'string' ? th.id : generateId(`thm_${idx}`),
+      title: sanitizeText(th.title || 'Signature Theme'),
+      vibe: sanitizeText(th.vibe || 'Warm & Celebratory'),
+      description: sanitizeText(th.description || ''),
+      colorPalette: Array.isArray(th.colorPalette) ? th.colorPalette.map(sanitizeText) : ['#B8860B', '#FFF8DC', '#2E8B57'],
+      budgetImpact: th.budgetImpact === 'low' || th.budgetImpact === 'high' ? th.budgetImpact : ('medium' as const),
+      culturalContext: sanitizeText(th.culturalContext || ''),
+    })),
+    sustainabilitySuggestions: Array.isArray(raw?.ideas?.sustainabilitySuggestions)
+      ? raw.ideas.sustainabilitySuggestions.map(sanitizeText)
       : ['Digital invitations via QR code & WhatsApp', 'Locally sourced seasonal flowers instead of imported plastics'],
-    costSavingAlternatives: Array.isArray(rawAiData?.ideas?.costSavingAlternatives)
-      ? rawAiData.ideas.costSavingAlternatives.map(sanitizeText)
+    costSavingAlternatives: Array.isArray(raw?.ideas?.costSavingAlternatives)
+      ? raw.ideas.costSavingAlternatives.map(sanitizeText)
       : ['Book daytime wedding or weekday reception for up to 20% venue discount', 'Limit alcoholic bar to signature welcome drinks and beer/wine'],
   };
 
   // 8. Risks
+  const rawRisks = Array.isArray(raw?.risks?.items) ? raw.risks.items : [];
   const risks = {
-    items: Array.isArray(rawAiData?.risks?.items)
-      ? rawAiData.risks.items.map((r: any, idx: number) => ({
-          id: r?.id || generateId(`rsk_${idx}`),
-          title: sanitizeText(r?.title || 'Operational Risk'),
-          category: r?.category || 'logistics',
-          probability: (r?.probability || 'medium') as 'low' | 'medium' | 'high',
-          severity: (r?.severity || 'medium') as 'low' | 'medium' | 'high',
-          mitigation: sanitizeText(r?.mitigation || 'Plan backup options in advance'),
-          contingencyAction: sanitizeText(r?.contingencyAction || 'Activate contingency buffer'),
-          isResolved: false,
-        }))
-      : [],
+    items: rawRisks.map((r, idx) => ({
+      id: typeof r.id === 'string' ? r.id : generateId(`rsk_${idx}`),
+      title: sanitizeText(r.title || 'Operational Risk'),
+      category: toRiskCategory(r.category),
+      probability: toRiskProbability(r.probability),
+      severity: toRiskSeverity(r.severity),
+      mitigation: sanitizeText(r.mitigation || 'Plan backup options in advance'),
+      contingencyAction: sanitizeText(r.contingencyAction || 'Activate contingency buffer'),
+      isResolved: false,
+    })),
   };
 
   return {

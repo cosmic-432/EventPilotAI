@@ -4,6 +4,9 @@
  * prompt-injection protection, and rate limiting algorithms.
  */
 
+import { isRecord, PlanSectionName, EventContextPayload, RegenerateSectionRequestBody } from '../types/api';
+import { EventCategory, VenuePreference } from '../types/event';
+
 export const ALLOWED_CATEGORIES = [
   'wedding',
   'birthday',
@@ -42,20 +45,40 @@ export const ALLOWED_SECTIONS = [
   'risks',
 ] as const;
 
+export type AllowedCategory = (typeof ALLOWED_CATEGORIES)[number];
+export type AllowedVenuePreference = (typeof ALLOWED_VENUE_PREFERENCES)[number];
+export type AllowedCurrency = (typeof ALLOWED_CURRENCIES)[number];
+
+export function isAllowedCategory(value: string): value is AllowedCategory {
+  return (ALLOWED_CATEGORIES as readonly string[]).includes(value);
+}
+
+export function isAllowedVenuePreference(value: string): value is AllowedVenuePreference {
+  return (ALLOWED_VENUE_PREFERENCES as readonly string[]).includes(value);
+}
+
+export function isAllowedCurrency(value: string): value is AllowedCurrency {
+  return (ALLOWED_CURRENCIES as readonly string[]).includes(value);
+}
+
+export function isAllowedSection(value: string): value is PlanSectionName {
+  return (ALLOWED_SECTIONS as readonly string[]).includes(value);
+}
+
 export interface PlanGenerationInput {
   name: string;
-  category: string;
+  category: EventCategory;
   targetDate: string;
   location: string;
   guestCount: number;
   totalBudget: number;
-  currency?: string;
-  venuePreference?: string;
-  styleTheme?: string;
-  dietaryRequirements?: string[];
-  accessibilityRequirements?: string[];
-  priorities?: string[];
-  naturalLanguagePrompt?: string;
+  currency: string;
+  venuePreference: VenuePreference;
+  styleTheme: string;
+  dietaryRequirements: string[];
+  accessibilityRequirements: string[];
+  priorities: string[];
+  naturalLanguagePrompt: string;
 }
 
 export interface ValidationResult<T> {
@@ -79,14 +102,14 @@ export function sanitizePromptString(input: unknown, maxLength = 1000): string {
 }
 
 /**
- * Validates request payload for /api/plan/generate
+ * Validates request payload for /api/plan/generate with strict type checking
  */
 export function validatePlanGenerationInput(
-  raw: any
+  raw: unknown
 ): ValidationResult<PlanGenerationInput> {
   const errors: Record<string, string> = {};
 
-  if (!raw || typeof raw !== 'object') {
+  if (!isRecord(raw)) {
     return {
       isValid: false,
       errors: { body: 'Request body must be a valid JSON object.' },
@@ -103,7 +126,7 @@ export function validatePlanGenerationInput(
 
   // Category
   const rawCategory = typeof raw.category === 'string' ? raw.category.trim() : '';
-  if (!ALLOWED_CATEGORIES.includes(rawCategory as any)) {
+  if (!isAllowedCategory(rawCategory)) {
     errors.category = `Invalid category. Must be one of: ${ALLOWED_CATEGORIES.join(', ')}`;
   }
 
@@ -129,7 +152,7 @@ export function validatePlanGenerationInput(
   }
 
   // Guest Count
-  const guestNum = Number(raw.guestCount);
+  const guestNum = typeof raw.guestCount === 'number' ? raw.guestCount : Number(raw.guestCount);
   if (raw.guestCount === undefined || raw.guestCount === null || isNaN(guestNum)) {
     errors.guestCount = 'Guest count is required and must be numeric.';
   } else if (!Number.isInteger(guestNum) || guestNum < 1) {
@@ -139,7 +162,7 @@ export function validatePlanGenerationInput(
   }
 
   // Total Budget
-  const budgetNum = Number(raw.totalBudget);
+  const budgetNum = typeof raw.totalBudget === 'number' ? raw.totalBudget : Number(raw.totalBudget);
   if (raw.totalBudget === undefined || raw.totalBudget === null || isNaN(budgetNum)) {
     errors.totalBudget = 'Total budget is required and must be numeric.';
   } else if (budgetNum <= 0) {
@@ -150,21 +173,39 @@ export function validatePlanGenerationInput(
 
   // Currency
   const rawCurrency = (typeof raw.currency === 'string' ? raw.currency.trim().toUpperCase() : 'INR');
-  if (!ALLOWED_CURRENCIES.includes(rawCurrency as any)) {
+  if (!isAllowedCurrency(rawCurrency)) {
     errors.currency = `Unsupported currency. Allowed: ${ALLOWED_CURRENCIES.join(', ')}`;
   }
 
   // Venue Preference
   const rawVenue = typeof raw.venuePreference === 'string' ? raw.venuePreference.trim() : 'flexible';
-  if (!ALLOWED_VENUE_PREFERENCES.includes(rawVenue as any)) {
+  if (!isAllowedVenuePreference(rawVenue)) {
     errors.venuePreference = `Invalid venue preference. Allowed: ${ALLOWED_VENUE_PREFERENCES.join(', ')}`;
   }
 
   const isValid = Object.keys(errors).length === 0;
 
-  if (!isValid) {
-    return { isValid, errors };
+  if (!isValid || !isAllowedCategory(rawCategory) || !isAllowedVenuePreference(rawVenue) || !isAllowedCurrency(rawCurrency)) {
+    return { isValid: false, errors };
   }
+
+  const dietaryRequirements = Array.isArray(raw.dietaryRequirements)
+    ? raw.dietaryRequirements
+        .map((d: unknown) => sanitizePromptString(String(d), 50))
+        .filter((d: string) => d.length > 0)
+    : [];
+
+  const accessibilityRequirements = Array.isArray(raw.accessibilityRequirements)
+    ? raw.accessibilityRequirements
+        .map((a: unknown) => sanitizePromptString(String(a), 50))
+        .filter((a: string) => a.length > 0)
+    : [];
+
+  const priorities = Array.isArray(raw.priorities)
+    ? raw.priorities
+        .map((p: unknown) => sanitizePromptString(String(p), 80))
+        .filter((p: string) => p.length > 0)
+    : [];
 
   const sanitized: PlanGenerationInput = {
     name: sanitizePromptString(rawName, 120),
@@ -176,15 +217,9 @@ export function validatePlanGenerationInput(
     currency: rawCurrency,
     venuePreference: rawVenue,
     styleTheme: sanitizePromptString(raw.styleTheme, 150) || 'Elegant & Modern',
-    dietaryRequirements: Array.isArray(raw.dietaryRequirements)
-      ? raw.dietaryRequirements.map((d: any) => sanitizePromptString(String(d), 50)).filter(Boolean)
-      : [],
-    accessibilityRequirements: Array.isArray(raw.accessibilityRequirements)
-      ? raw.accessibilityRequirements.map((a: any) => sanitizePromptString(String(a), 50)).filter(Boolean)
-      : [],
-    priorities: Array.isArray(raw.priorities)
-      ? raw.priorities.map((p: any) => sanitizePromptString(String(p), 80)).filter(Boolean)
-      : [],
+    dietaryRequirements,
+    accessibilityRequirements,
+    priorities,
     naturalLanguagePrompt: sanitizePromptString(raw.naturalLanguagePrompt, 2000),
   };
 
@@ -194,43 +229,55 @@ export function validatePlanGenerationInput(
 /**
  * Validates request payload for /api/plan/regenerate-section
  */
-export function validateRegenerateSectionInput(raw: any): {
+export function validateRegenerateSectionInput(raw: unknown): {
   isValid: boolean;
   errors: Record<string, string>;
-  sanitized?: {
-    sectionName: string;
-    newConstraints: string;
-    eventContext: any;
-  };
+  sanitized?: RegenerateSectionRequestBody;
 } {
   const errors: Record<string, string> = {};
 
-  if (!raw || typeof raw !== 'object') {
+  if (!isRecord(raw)) {
     return { isValid: false, errors: { body: 'Invalid JSON request body.' } };
   }
 
-  if (!raw.sectionName || !ALLOWED_SECTIONS.includes(raw.sectionName)) {
+  const sectionName = typeof raw.sectionName === 'string' ? raw.sectionName.trim() : '';
+  if (!isAllowedSection(sectionName)) {
     errors.sectionName = `Invalid section. Allowed: ${ALLOWED_SECTIONS.join(', ')}`;
   }
 
-  if (!raw.eventContext || typeof raw.eventContext !== 'object') {
+  if (!isRecord(raw.eventContext)) {
     errors.eventContext = 'Event context is required for section regeneration.';
   }
 
-  const newConstraints = sanitizePromptString(raw.newConstraints || '', 1000);
-
-  const isValid = Object.keys(errors).length === 0;
-  if (!isValid) {
-    return { isValid, errors };
+  const rawConstraints = typeof raw.newConstraints === 'string' ? raw.newConstraints.trim() : '';
+  if (!rawConstraints) {
+    errors.newConstraints = 'New constraints or instructions are required.';
   }
+
+  const newConstraints = sanitizePromptString(rawConstraints, 1000);
+
+  if (Object.keys(errors).length > 0 || !isAllowedSection(sectionName) || !isRecord(raw.eventContext)) {
+    return { isValid: false, errors };
+  }
+
+  const rawCtx = raw.eventContext;
+  const eventContext: EventContextPayload = {
+    name: sanitizePromptString(rawCtx.name, 120) || 'Signature Celebration',
+    category: typeof rawCtx.category === 'string' ? rawCtx.category : 'custom',
+    location: sanitizePromptString(rawCtx.location, 100) || 'Local Area',
+    guestCount: typeof rawCtx.guestCount === 'number' ? rawCtx.guestCount : 100,
+    totalBudget: typeof rawCtx.totalBudget === 'number' ? rawCtx.totalBudget : 500000,
+    currency: typeof rawCtx.currency === 'string' ? rawCtx.currency : 'INR',
+    targetDate: typeof rawCtx.targetDate === 'string' ? rawCtx.targetDate : '2026-12-31',
+  };
 
   return {
     isValid: true,
     errors: {},
     sanitized: {
-      sectionName: raw.sectionName,
+      sectionName,
       newConstraints,
-      eventContext: raw.eventContext,
+      eventContext,
     },
   };
 }

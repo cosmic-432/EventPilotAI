@@ -34,6 +34,12 @@ interface PlanningHistoryViewProps {
   addToast: (type: 'success' | 'warning' | 'error' | 'info', title: string, message?: string) => void;
 }
 
+export type HistorySortOption = 'updated' | 'date_asc' | 'date_desc' | 'budget_desc' | 'name_asc';
+
+export const isHistorySortOption = (val: string): val is HistorySortOption => {
+  return ['updated', 'date_asc', 'date_desc', 'budget_desc', 'name_asc'].includes(val);
+};
+
 export const PlanningHistoryView: React.FC<PlanningHistoryViewProps> = ({
   currentPlan,
   savedPlans,
@@ -46,7 +52,7 @@ export const PlanningHistoryView: React.FC<PlanningHistoryViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'updated' | 'date_asc' | 'date_desc' | 'budget_desc' | 'name_asc'>('updated');
+  const [sortBy, setSortBy] = useState<HistorySortOption>('updated');
 
   // Rename modal state
   const [renamingPlan, setRenamingPlan] = useState<PlanIndexEntry | null>(null);
@@ -282,7 +288,11 @@ export const PlanningHistoryView: React.FC<PlanningHistoryViewProps> = ({
           <div>
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => {
+                if (isHistorySortOption(e.target.value)) {
+                  setSortBy(e.target.value);
+                }
+              }}
               aria-label="Sort events"
               className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-xs text-[#392832] focus:outline-none focus:ring-1 focus:ring-[#B85F80]"
             >

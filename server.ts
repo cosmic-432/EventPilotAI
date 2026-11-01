@@ -16,7 +16,9 @@ import {
   validatePlanGenerationInput,
   validateRegenerateSectionInput,
   MemoryRateLimiter,
+  PlanGenerationInput,
 } from './src/utils/serverValidation';
+import { isRecord, RawAiGeneratedPlan } from './src/types/api';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,9 +83,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
 });
 
 /**
- * Robust JSON extraction helper
+ * Robust, safely typed JSON extraction pipeline
  */
-function extractJsonFromModelOutput(text: string): any {
+function extractJsonFromModelOutput(text: string): Record<string, unknown> {
   if (!text) throw new Error('Empty model output');
   
   // Clean markdown block wrappers if present
@@ -94,18 +96,25 @@ function extractJsonFromModelOutput(text: string): any {
     cleaned = cleaned.replace(/^```\s*/, '').replace(/\s*```$/, '');
   }
 
+  let parsed: unknown;
   try {
-    return JSON.parse(cleaned);
+    parsed = JSON.parse(cleaned);
   } catch (initialErr) {
     // Attempt regex extraction between first { and last }
     const firstBrace = cleaned.indexOf('{');
     const lastBrace = cleaned.lastIndexOf('}');
     if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
       const candidate = cleaned.substring(firstBrace, lastBrace + 1);
-      return JSON.parse(candidate);
+      parsed = JSON.parse(candidate);
+    } else {
+      throw initialErr;
     }
-    throw initialErr;
   }
+
+  if (isRecord(parsed)) {
+    return parsed;
+  }
+  throw new Error('Model output did not produce a valid JSON object structure.');
 }
 
 /**
@@ -338,20 +347,21 @@ Please respond with a JSON object following this EXACT schema:
       source: 'gemini',
       model: MODEL_NAME,
     });
-  } catch (err: any) {
-    console.error('Plan generation encountered error. Engaging resilient benchmark fallback:', err?.message || err);
+  } catch (err: unknown) {
+    const errMessage = err instanceof Error ? err.message : String(err);
+    console.error('Plan generation encountered error. Engaging resilient benchmark fallback:', errMessage);
     // Graceful resilience: when Gemini API experiences temporary 503 high demand or timeouts,
     // generate a comprehensive tailored benchmark plan so the user journey is never blocked.
     const fallbackPlan = generateFallbackPlan({
-      name: req.body?.name || 'Signature Event',
-      category: req.body?.category || 'wedding',
-      targetDate: req.body?.targetDate,
-      location: req.body?.location || 'Pune',
-      guestCount: req.body?.guestCount || 200,
-      totalBudget: req.body?.totalBudget || 800000,
-      currency: req.body?.currency || 'INR',
-      venuePreference: req.body?.venuePreference || 'flexible',
-      styleTheme: req.body?.styleTheme || 'Elegant Contemporary',
+      name: sanitized.name,
+      category: sanitized.category,
+      targetDate: sanitized.targetDate,
+      location: sanitized.location,
+      guestCount: sanitized.guestCount,
+      totalBudget: sanitized.totalBudget,
+      currency: sanitized.currency,
+      venuePreference: sanitized.venuePreference,
+      styleTheme: sanitized.styleTheme,
     });
     return res.json({
       plan: fallbackPlan,
@@ -426,8 +436,9 @@ Respond with ONLY valid JSON containing the updated "${sectionName}" section for
 
     const parsed = extractJsonFromModelOutput(response.text || '{}');
     return res.json({ sectionData: parsed[sectionName] || parsed });
-  } catch (err: any) {
-    console.error('Section regeneration failed:', err?.message || err);
+  } catch (err: unknown) {
+    const errMessage = err instanceof Error ? err.message : String(err);
+    console.error('Section regeneration failed:', errMessage);
     res.status(500).json({
       error: 'Failed to regenerate section.',
       details: 'The AI service encountered an issue. Please try again.',
@@ -438,7 +449,7 @@ Respond with ONLY valid JSON containing the updated "${sectionName}" section for
 /**
  * High-fidelity fallback plan generator when offline or before API key setup
  */
-function generateFallbackPlan(params: any): any {
+function generateFallbackPlan(params: Partial<PlanGenerationInput>): RawAiGeneratedPlan {
   const {
     name,
     category,
@@ -453,6 +464,7 @@ function generateFallbackPlan(params: any): any {
 
   const budgetNum = Number(totalBudget) || 800000;
   const isINR = currency === 'INR';
+  const guests = typeof guestCount === 'number' && guestCount > 0 ? guestCount : 150;
 
   return {
     eventDetails: {
@@ -465,7 +477,7 @@ function generateFallbackPlan(params: any): any {
       {
         id: 'asmp_1',
         category: 'Guest Attendance',
-        description: `Projecting approximately 85% attendance (${Math.round(guestCount * 0.85)} expected attendees) for catering portions.`,
+        description: `Projecting approximately 85% attendance (${Math.round(guests * 0.85)} expected attendees) for catering portions.`,
         isConfirmed: false,
       },
       {
@@ -655,14 +667,14 @@ function generateFallbackPlan(params: any): any {
       ],
     },
     guestPlan: {
-      estimatedGuests: guestCount,
-      cateringPerHeadMajor: Math.round((budgetNum * 0.32) / (guestCount || 1)),
-      estimatedSpaceSqFt: guestCount * 22,
+      estimatedGuests: guests,
+      cateringPerHeadMajor: Math.round((budgetNum * 0.32) / guests),
+      estimatedSpaceSqFt: guests * 22,
       seatingStyle: 'Round banquet tables with central stage sightline',
       dietaryBreakdown: {
-        'Vegetarian': Math.round(guestCount * 0.7),
-        'Non-Vegetarian': Math.round(guestCount * 0.25),
-        'Special / Vegan / Jain': Math.round(guestCount * 0.05),
+        'Vegetarian': Math.round(guests * 0.7),
+        'Non-Vegetarian': Math.round(guests * 0.25),
+        'Special / Vegan / Jain': Math.round(guests * 0.05),
       },
       accessibilityProvisions: [
         'Step-free entrance ramps with handrails',

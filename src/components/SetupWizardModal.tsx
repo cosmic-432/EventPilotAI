@@ -13,11 +13,28 @@ import { EventCategory, VenuePreference } from '../types/event';
 import { SUPPORTED_CURRENCIES, formatCurrency, toMinorUnits } from '../utils/currency';
 import { validateEventInput } from '../utils/validation';
 import { getTodayIso } from '../utils/timeline';
+import { useFocusTrap } from '../utils/useFocusTrap';
+
+export interface SetupWizardFormData {
+  name: string;
+  category: EventCategory;
+  targetDate: string;
+  location: string;
+  guestCount: number;
+  totalBudget: number;
+  currency: string;
+  venuePreference: VenuePreference;
+  styleTheme: string;
+  dietaryRequirements: string[];
+  accessibilityRequirements: string[];
+  priorities: string[];
+  notes?: string;
+}
 
 interface SetupWizardModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: any) => void;
+  onSubmit: (formData: SetupWizardFormData) => void;
   isLoading: boolean;
 }
 
@@ -29,8 +46,9 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
 }) => {
   const [step, setStep] = React.useState(1);
   const totalSteps = 4;
+  const trapRef = useFocusTrap(isOpen, onClose);
 
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = React.useState<SetupWizardFormData>({
     name: 'Ananya & Rohan Wedding',
     category: 'wedding' as EventCategory,
     targetDate: '2026-12-28',
@@ -47,15 +65,6 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
   });
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
-
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -115,7 +124,10 @@ export const SetupWizardModal: React.FC<SetupWizardModalProps> = ({
       aria-labelledby="wizard-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#EADCE1] overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
+      <div
+        ref={trapRef}
+        className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-[#EADCE1] overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200"
+      >
         {/* Header */}
         <div className="px-6 py-5 border-b border-[#EADCE1] flex items-center justify-between bg-white">
           <div>

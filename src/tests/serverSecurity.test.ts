@@ -162,5 +162,45 @@ describe('Server Security, Validation & Rate Limiting', () => {
       // ipB should still have quota
       expect(limiter.check(ipB).allowed).toBe(true);
     });
+
+    it('resets rate limit allowance after time window elapses', async () => {
+      const shortLimiter = new MemoryRateLimiter(50, 1); // 1 request per 50ms
+      const ip = '127.0.0.1';
+
+      expect(shortLimiter.check(ip).allowed).toBe(true);
+      expect(shortLimiter.check(ip).allowed).toBe(false);
+
+      // Wait 60ms for window to expire
+      await new Promise((r) => setTimeout(r, 60));
+
+      expect(shortLimiter.check(ip).allowed).toBe(true);
+    });
+  });
+
+  describe('Strict Input Boundary & Type Guards', () => {
+    it('rejects input with null, non-string event name, or negative budget', () => {
+      const res1 = validatePlanGenerationInput({
+        name: null as unknown as string,
+        category: 'wedding',
+        targetDate: '2026-12-12',
+        location: 'Pune',
+        guestCount: 100,
+        totalBudget: -500,
+        currency: 'INR',
+      });
+      expect(res1.isValid).toBe(false);
+      expect(res1.errors.name).toBeDefined();
+      expect(res1.errors.totalBudget).toBeDefined();
+    });
+
+    it('rejects empty or whitespace constraints during section regeneration', () => {
+      const res = validateRegenerateSectionInput({
+        sectionName: 'budget',
+        eventContext: { name: 'Gala' },
+        newConstraints: '    ',
+      });
+      expect(res.isValid).toBe(false);
+      expect(res.errors.newConstraints).toBeDefined();
+    });
   });
 });

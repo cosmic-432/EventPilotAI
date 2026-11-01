@@ -1,14 +1,17 @@
 import React from 'react';
 import { X, Sparkles, RefreshCw, AlertCircle } from 'lucide-react';
 import { EventPlan } from '../types/event';
+import { useFocusTrap } from '../utils/useFocusTrap';
+
+export type RegenerableSection = 'budget' | 'timeline' | 'vendors' | 'ideas' | 'risks';
 
 interface RegenerateSectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   plan: EventPlan;
-  onSectionRegenerated: (sectionName: string, updatedSectionData: any) => void;
+  onSectionRegenerated: (sectionName: string, updatedSectionData: unknown) => void;
   isLoading: boolean;
-  onSubmitRegenerate: (sectionName: 'budget' | 'timeline' | 'vendors' | 'ideas' | 'risks', constraints: string) => Promise<void>;
+  onSubmitRegenerate: (sectionName: RegenerableSection, constraints: string) => Promise<void>;
 }
 
 export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
@@ -17,18 +20,10 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
   isLoading,
   onSubmitRegenerate,
 }) => {
-  const [section, setSection] = React.useState<'budget' | 'timeline' | 'vendors' | 'ideas' | 'risks'>('budget');
+  const [section, setSection] = React.useState<RegenerableSection>('budget');
   const [constraints, setConstraints] = React.useState('');
   const [errorMsg, setErrorMsg] = React.useState('');
-
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const trapRef = useFocusTrap(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -39,8 +34,9 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
     try {
       await onSubmitRegenerate(section, constraints.trim());
       onClose();
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Failed to re-optimize section. Please try again.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to re-optimize section. Please try again.';
+      setErrorMsg(msg);
     }
   };
 
@@ -69,16 +65,28 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
     ],
   };
 
+  const SECTION_OPTIONS: Array<{ id: RegenerableSection; label: string }> = [
+    { id: 'budget', label: '💰 Budget' },
+    { id: 'timeline', label: '📅 Timeline' },
+    { id: 'vendors', label: '🤝 Vendors' },
+    { id: 'ideas', label: '✨ Themes & Ideas' },
+    { id: 'risks', label: '🛡️ Risks' },
+  ];
+
   return (
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="regenerate-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
     >
-      <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div
+        ref={trapRef}
+        className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4 animate-in fade-in zoom-in-95 duration-150"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-[#EADCE1]">
           <div>
-            <h3 className="font-editorial text-base font-bold text-[#392832] flex items-center gap-2">
+            <h3 id="regenerate-modal-title" className="font-editorial text-base font-bold text-[#392832] flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-[#B85F80]" />
               Selective AI Section Re-Optimization
             </h3>
@@ -108,18 +116,12 @@ export const RegenerateSectionModal: React.FC<RegenerateSectionModalProps> = ({
               Select Section to Re-Optimize
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {[
-                { id: 'budget', label: '💰 Budget' },
-                { id: 'timeline', label: '📅 Timeline' },
-                { id: 'vendors', label: '🤝 Vendors' },
-                { id: 'ideas', label: '✨ Themes & Ideas' },
-                { id: 'risks', label: '🛡️ Risks' },
-              ].map((s) => (
+              {SECTION_OPTIONS.map((s) => (
                 <button
                   key={s.id}
                   type="button"
                   onClick={() => {
-                    setSection(s.id as any);
+                    setSection(s.id);
                     setConstraints('');
                   }}
                   className={`py-2 px-3 rounded-xl border text-xs font-semibold transition-all ${

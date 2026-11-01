@@ -16,7 +16,8 @@ import {
   toMajorUnits,
   toMinorUnits,
 } from '../utils/currency';
-import { generateId } from '../utils/validation';
+import { generateId, toPriorityLevel, toPaymentStatus } from '../utils/validation';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface BudgetPlannerViewProps {
   plan: EventPlan;
@@ -36,6 +37,10 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
   const [selectedCategoryFilter, setSelectedCategoryFilter] = React.useState<string>('all');
   const [editingItem, setEditingItem] = React.useState<BudgetItem | null>(null);
   const [isAddingItem, setIsAddingItem] = React.useState(false);
+  const trapRef = useFocusTrap(isAddingItem, () => {
+    setIsAddingItem(false);
+    setEditingItem(null);
+  });
 
   // Form state for add/edit modal
   const [formData, setFormData] = React.useState<{
@@ -454,21 +459,27 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
       </div>
 
       {/* Add / Edit Modal */}
+      {/* Add / Edit Modal */}
       {isAddingItem && (
         <div
           role="dialog"
           aria-modal="true"
+          aria-labelledby="budget-item-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
         >
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4">
-            <h3 className="font-editorial text-base font-bold text-[#392832]">
+          <div
+            ref={trapRef}
+            className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4"
+          >
+            <h3 id="budget-item-modal-title" className="font-editorial text-base font-bold text-[#392832]">
               {editingItem ? 'Edit Budget Item' : 'Add New Budget Item'}
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#74616B] mb-1">Description *</label>
+                <label htmlFor="bgt-desc-input" className="block text-xs font-bold text-[#74616B] mb-1">Description *</label>
                 <input
+                  id="bgt-desc-input"
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -479,8 +490,9 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
+                  <label htmlFor="bgt-category-select" className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
                   <select
+                    id="bgt-category-select"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
@@ -498,10 +510,11 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Priority</label>
+                  <label htmlFor="bgt-priority-select" className="block text-xs font-bold text-[#74616B] mb-1">Priority</label>
                   <select
+                    id="bgt-priority-select"
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as PriorityLevel })}
+                    onChange={(e) => setFormData({ ...formData, priority: toPriorityLevel(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="critical">Critical</option>
@@ -515,10 +528,11 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">
+                  <label htmlFor="bgt-est-input" className="block text-xs font-bold text-[#74616B] mb-1">
                     Estimated ({currency})
                   </label>
                   <input
+                    id="bgt-est-input"
                     type="number"
                     min="0"
                     value={formData.estimatedAmountMajor}
@@ -530,10 +544,11 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">
+                  <label htmlFor="bgt-act-input" className="block text-xs font-bold text-[#74616B] mb-1">
                     Actual Spent ({currency})
                   </label>
                   <input
+                    id="bgt-act-input"
                     type="number"
                     min="0"
                     value={formData.actualAmountMajor}
@@ -545,8 +560,9 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Quantity</label>
+                  <label htmlFor="bgt-qty-input" className="block text-xs font-bold text-[#74616B] mb-1">Quantity</label>
                   <input
+                    id="bgt-qty-input"
                     type="number"
                     min="1"
                     value={formData.quantity}
@@ -557,10 +573,11 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#74616B] mb-1">Payment Status</label>
+                <label htmlFor="bgt-status-select" className="block text-xs font-bold text-[#74616B] mb-1">Payment Status</label>
                 <select
+                  id="bgt-status-select"
                   value={formData.paymentStatus}
-                  onChange={(e) => setFormData({ ...formData, paymentStatus: e.target.value as PaymentStatus })}
+                  onChange={(e) => setFormData({ ...formData, paymentStatus: toPaymentStatus(e.target.value) })}
                   className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                 >
                   <option value="unpaid">Unpaid / Budgeted Only</option>
@@ -571,8 +588,9 @@ export const BudgetPlannerView: React.FC<BudgetPlannerViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#74616B] mb-1">Notes</label>
+                <label htmlFor="bgt-notes-input" className="block text-xs font-bold text-[#74616B] mb-1">Notes</label>
                 <textarea
+                  id="bgt-notes-input"
                   rows={2}
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}

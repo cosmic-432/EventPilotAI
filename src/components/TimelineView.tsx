@@ -18,7 +18,8 @@ import {
   daysBetween,
   getTodayIso,
 } from '../utils/timeline';
-import { generateId } from '../utils/validation';
+import { generateId, toPriorityLevel } from '../utils/validation';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface TimelineViewProps {
   plan: EventPlan;
@@ -40,6 +41,10 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
   const [priorityFilter, setPriorityFilter] = React.useState<string>('all');
   const [editingTask, setEditingTask] = React.useState<TimelineTask | null>(null);
   const [isAddingTask, setIsAddingTask] = React.useState(false);
+  const trapRef = useFocusTrap(isAddingTask, () => {
+    setIsAddingTask(false);
+    setEditingTask(null);
+  });
 
   const [formData, setFormData] = React.useState<{
     title: string;
@@ -432,17 +437,22 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
+          aria-labelledby="task-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
         >
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4">
-            <h3 className="font-editorial text-base font-bold text-[#392832]">
+          <div
+            ref={trapRef}
+            className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4"
+          >
+            <h3 id="task-modal-title" className="font-editorial text-base font-bold text-[#392832]">
               {editingTask ? 'Edit Task' : 'Add New Task'}
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#74616B] mb-1">Task Title *</label>
+                <label htmlFor="task-title-input" className="block text-xs font-bold text-[#74616B] mb-1">Task Title *</label>
                 <input
+                  id="task-title-input"
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -452,8 +462,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#74616B] mb-1">Description</label>
+                <label htmlFor="task-desc-input" className="block text-xs font-bold text-[#74616B] mb-1">Description</label>
                 <textarea
+                  id="task-desc-input"
                   rows={2}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -464,8 +475,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
+                  <label htmlFor="task-cat-select" className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
                   <select
+                    id="task-cat-select"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
@@ -483,8 +495,9 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Due Date *</label>
+                  <label htmlFor="task-due-input" className="block text-xs font-bold text-[#74616B] mb-1">Due Date *</label>
                   <input
+                    id="task-due-input"
                     type="date"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
@@ -495,10 +508,11 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Priority</label>
+                  <label htmlFor="task-prio-select" className="block text-xs font-bold text-[#74616B] mb-1">Priority</label>
                   <select
+                    id="task-prio-select"
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as PriorityLevel })}
+                    onChange={(e) => setFormData({ ...formData, priority: toPriorityLevel(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="critical">Critical</option>
@@ -510,10 +524,15 @@ export const TimelineView: React.FC<TimelineViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Status</label>
+                  <label htmlFor="task-status-select" className="block text-xs font-bold text-[#74616B] mb-1">Status</label>
                   <select
+                    id="task-status-select"
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const status: TaskStatus = val === 'completed' || val === 'in_progress' || val === 'blocked' ? val : 'todo';
+                      setFormData({ ...formData, status });
+                    }}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="todo">To Do</option>

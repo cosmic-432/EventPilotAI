@@ -3,6 +3,7 @@ import { X, Printer } from 'lucide-react';
 import { EventPlan } from '../types/event';
 import { formatCurrency, calculateBudgetSummary } from '../utils/currency';
 import { formatDisplayDate } from '../utils/timeline';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface PrintModalProps {
   isOpen: boolean;
@@ -11,14 +12,7 @@ interface PrintModalProps {
 }
 
 export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, onClose, plan }) => {
-  React.useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const trapRef = useFocusTrap(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -34,9 +28,13 @@ export const PrintModal: React.FC<PrintModalProps> = ({ isOpen, onClose, plan })
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="print-report-title"
       className="fixed inset-0 z-50 overflow-y-auto bg-[#392832]/40 backdrop-blur-xs flex items-center justify-center p-2 sm:p-6"
     >
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-[#EADCE1] overflow-hidden my-4 flex flex-col max-h-[92vh]">
+      <div
+        ref={trapRef}
+        className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-[#EADCE1] overflow-hidden my-4 flex flex-col max-h-[92vh]"
+      >
         {/* Top Control Bar (Hidden when printed) */}
         <div className="px-6 py-4 border-b border-[#EADCE1] bg-[#F5E9ED] flex items-center justify-between no-print">
           <div>

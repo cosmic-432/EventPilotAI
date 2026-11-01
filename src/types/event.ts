@@ -131,12 +131,16 @@ export interface ThemeIdea {
   culturalContext?: string;
 }
 
+export type RiskCategory = 'weather' | 'vendor' | 'budget' | 'logistics' | 'compliance' | 'technical';
+export type RiskProbability = 'low' | 'medium' | 'high';
+export type RiskSeverity = 'low' | 'medium' | 'high';
+
 export interface RiskRecommendation {
   id: string;
   title: string;
-  category: 'weather' | 'vendor' | 'budget' | 'logistics' | 'compliance' | 'technical';
-  probability: 'low' | 'medium' | 'high';
-  severity: 'low' | 'medium' | 'high';
+  category: RiskCategory;
+  probability: RiskProbability;
+  severity: RiskSeverity;
   mitigation: string;
   contingencyAction: string;
   isResolved: boolean;

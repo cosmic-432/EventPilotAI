@@ -12,7 +12,8 @@ import {
 import { EventPlan, VendorItem, BookingStatus } from '../types/event';
 import { formatCurrency, toMajorUnits, toMinorUnits } from '../utils/currency';
 import { formatDisplayDate } from '../utils/timeline';
-import { generateId } from '../utils/validation';
+import { generateId, toBookingStatus } from '../utils/validation';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface VendorsViewProps {
   plan: EventPlan;
@@ -29,6 +30,10 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
 
   const [editingVendor, setEditingVendor] = React.useState<VendorItem | null>(null);
   const [isAddingVendor, setIsAddingVendor] = React.useState(false);
+  const trapRef = useFocusTrap(isAddingVendor, () => {
+    setIsAddingVendor(false);
+    setEditingVendor(null);
+  });
 
   const [formData, setFormData] = React.useState<{
     title: string;
@@ -297,17 +302,22 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
         <div
           role="dialog"
           aria-modal="true"
+          aria-labelledby="vendor-modal-title"
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs"
         >
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4 max-h-[90vh] overflow-y-auto">
-            <h3 className="font-editorial text-base font-bold text-[#392832]">
+          <div
+            ref={trapRef}
+            className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-[#EADCE1] space-y-4 max-h-[90vh] overflow-y-auto"
+          >
+            <h3 id="vendor-modal-title" className="font-editorial text-base font-bold text-[#392832]">
               {editingVendor ? 'Edit Partner Details' : 'Add New Service Partner'}
             </h3>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-bold text-[#74616B] mb-1">Partner / Deliverable *</label>
+                <label htmlFor="vendor-title-input" className="block text-xs font-bold text-[#74616B] mb-1">Partner / Deliverable *</label>
                 <input
+                  id="vendor-title-input"
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -318,8 +328,9 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
+                  <label htmlFor="vendor-cat-select" className="block text-xs font-bold text-[#74616B] mb-1">Category</label>
                   <select
+                    id="vendor-cat-select"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
@@ -335,10 +346,11 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Status</label>
+                  <label htmlFor="vendor-status-select" className="block text-xs font-bold text-[#74616B] mb-1">Status</label>
                   <select
+                    id="vendor-status-select"
                     value={formData.bookingStatus}
-                    onChange={(e) => setFormData({ ...formData, bookingStatus: e.target.value as BookingStatus })}
+                    onChange={(e) => setFormData({ ...formData, bookingStatus: toBookingStatus(e.target.value) })}
                     className="w-full px-3 py-2 rounded-xl border border-[#EADCE1] bg-[#FBF5F6] text-sm text-[#392832] focus:outline-none focus:ring-2 focus:ring-[#B85F80]"
                   >
                     <option value="not_started">Not Started</option>
@@ -353,10 +365,11 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">
+                  <label htmlFor="vendor-cost-input" className="block text-xs font-bold text-[#74616B] mb-1">
                     Est. Cost ({currency})
                   </label>
                   <input
+                    id="vendor-cost-input"
                     type="number"
                     min="0"
                     value={formData.estimatedCostMajor}
@@ -368,8 +381,9 @@ export const VendorsView: React.FC<VendorsViewProps> = ({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-[#74616B] mb-1">Lock Date</label>
+                  <label htmlFor="vendor-date-input" className="block text-xs font-bold text-[#74616B] mb-1">Lock Date</label>
                   <input
+                    id="vendor-date-input"
                     type="date"
                     value={formData.targetBookingDate}
                     onChange={(e) => setFormData({ ...formData, targetBookingDate: e.target.value })}

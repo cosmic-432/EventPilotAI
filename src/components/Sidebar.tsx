@@ -143,9 +143,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         {/* Top: Brand Section & Collapse Toggle */}
         <div className="p-4 border-b border-[#EADCE1] flex items-center justify-between">
-          <div
+          <button
+            type="button"
             onClick={() => handleNavClick('dashboard')}
-            className={`flex items-center gap-3 cursor-pointer group ${
+            aria-label="EventPilot AI - Go to Overview"
+            className={`flex items-center gap-3 text-left cursor-pointer group bg-transparent border-0 p-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#B85F80] rounded-xl ${
               isCollapsed ? 'justify-center w-full' : ''
             }`}
           >
@@ -171,7 +173,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 </p>
               </div>
             )}
-          </div>
+          </button>
 
           {/* Desktop Collapse / Expand Button */}
           <button

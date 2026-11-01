@@ -199,12 +199,17 @@ export class EventRepository {
       if (typeof window !== 'undefined' && window.localStorage) {
         try {
           localStorage.setItem(`${STORAGE_KEY_PLANS_PREFIX}${plan.id}`, planJson);
-        } catch (storageErr: any) {
-          if (
-            storageErr.name === 'QuotaExceededError' ||
-            storageErr.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-            storageErr.code === 22
-          ) {
+        } catch (storageErr: unknown) {
+          const isQuota =
+            (storageErr instanceof Error &&
+              (storageErr.name === 'QuotaExceededError' ||
+                storageErr.name === 'NS_ERROR_DOM_QUOTA_REACHED')) ||
+            (typeof storageErr === 'object' &&
+              storageErr !== null &&
+              'code' in storageErr &&
+              (storageErr as { code?: number }).code === 22);
+
+          if (isQuota) {
             console.warn('Storage quota reached. Attempting cache pruning of older archived drafts...');
             this.pruneOldArchivedPlans();
             // Retry once

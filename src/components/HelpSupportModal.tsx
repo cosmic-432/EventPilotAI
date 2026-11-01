@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { X, HelpCircle, BookOpen, Command, Mail } from 'lucide-react';
+import { useFocusTrap } from '../utils/useFocusTrap';
 
 interface HelpSupportModalProps {
   isOpen: boolean;
@@ -7,14 +8,7 @@ interface HelpSupportModalProps {
 }
 
 export const HelpSupportModal: React.FC<HelpSupportModalProps> = ({ isOpen, onClose }) => {
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  const trapRef = useFocusTrap(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -25,7 +19,10 @@ export const HelpSupportModal: React.FC<HelpSupportModalProps> = ({ isOpen, onCl
       aria-labelledby="help-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#392832]/40 backdrop-blur-xs overflow-y-auto"
     >
-      <div className="w-full max-w-xl rounded-3xl bg-white border border-[#EADCE1] p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-6">
+      <div
+        ref={trapRef}
+        className="w-full max-w-xl rounded-3xl bg-white border border-[#EADCE1] p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150 my-6"
+      >
         <div className="flex items-center justify-between pb-3 border-b border-[#EADCE1]">
           <div>
             <h3 id="help-modal-title" className="font-editorial text-lg font-bold text-[#392832] flex items-center gap-2">

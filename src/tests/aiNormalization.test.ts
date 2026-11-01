@@ -139,4 +139,105 @@ describe('AI Plan Normalization & Defensive Parsing', () => {
     expect(plan.budget.currency).toBe('USD');
     expect(plan.budget.items[0].estimatedAmountMinor).toBe(1500000); // 15000 * 100 cents
   });
+
+  it('handles completely malformed raw AI payload gracefully (null, numbers, strings)', () => {
+    // Passing null as raw AI data
+    const planNull = normalizeAiPlan(null, defaultInputs);
+    expect(planNull).toBeDefined();
+    expect(planNull.eventDetails.name).toBe(defaultInputs.name);
+    expect(planNull.budget.items.length).toBeGreaterThan(0);
+
+    // Passing primitive number
+    const planNum = normalizeAiPlan(42, defaultInputs);
+    expect(planNum).toBeDefined();
+    expect(planNum.budget.totalBudgetMinor).toBe(defaultInputs.totalBudgetMinor);
+
+    // Passing string
+    const planStr = normalizeAiPlan("invalid string response", defaultInputs);
+    expect(planStr).toBeDefined();
+    expect(planStr.timeline.tasks.length).toBeGreaterThan(0);
+  });
+
+  it('sanitizes and clamps negative or zero quantities and costs in budget items', () => {
+    const rawAiWithInvalidBudget = {
+      budget: {
+        items: [
+          {
+            description: 'Item with negative quantity',
+            quantity: -5,
+            estimatedAmountMajor: -1000,
+          },
+          {
+            description: 'Item with NaN amount',
+            quantity: 0,
+            estimatedAmountMajor: 'invalid_number' as unknown as number,
+          },
+        ],
+      },
+    };
+
+    const plan = normalizeAiPlan(rawAiWithInvalidBudget, defaultInputs);
+    // Quantity should be clamped to at least 1
+    expect(plan.budget.items[0].quantity).toBe(1);
+    expect(plan.budget.items[1].quantity).toBe(1);
+    // Negative or non-numeric amount should default to positive fallback
+    expect(plan.budget.items[0].estimatedAmountMinor).toBeGreaterThan(0);
+    expect(plan.budget.items[1].estimatedAmountMinor).toBeGreaterThan(0);
+  });
+
+  it('handles date boundary calculations accurately including leap years and same-day events', () => {
+    // Leap year target date: Feb 29, 2028
+    const leapYearInputs = {
+      ...defaultInputs,
+      targetDate: '2028-02-29',
+    };
+
+    const rawAi = {
+      timeline: {
+        tasks: [
+          {
+            id: 'leap_task_1',
+            title: 'Leap Year Task 10 days before',
+            daysBeforeEvent: 10,
+          },
+          {
+            id: 'leap_task_2',
+            title: 'Day of event task',
+            daysBeforeEvent: 0,
+          },
+          {
+            id: 'leap_task_3',
+            title: 'Far in advance task',
+            daysBeforeEvent: 365,
+          },
+        ],
+      },
+    };
+
+    const plan = normalizeAiPlan(rawAi, leapYearInputs);
+    expect(plan.timeline.tasks[0].dueDate).toBe('2028-02-19');
+    expect(plan.timeline.tasks[1].dueDate).toBe('2028-02-29');
+    expect(plan.timeline.tasks[2].dueDate).toMatch(/^2027-/);
+  });
+
+  it('normalizes risk matrix with extreme or invalid enum values to safe defaults', () => {
+    const rawAiWithBadRisks = {
+      risks: {
+        items: [
+          {
+            id: 'r_1',
+            title: 'Custom Risk Factor',
+            category: 'unrecognized_category',
+            probability: 'extreme_probability',
+            severity: 'lethal',
+          },
+        ],
+      },
+    };
+
+    const plan = normalizeAiPlan(rawAiWithBadRisks, defaultInputs);
+    expect(plan.risks.items[0].category).toBe('logistics'); // default safe category
+    expect(plan.risks.items[0].probability).toBe('medium'); // default safe probability
+    expect(plan.risks.items[0].severity).toBe('medium'); // default safe severity
+  });
 });

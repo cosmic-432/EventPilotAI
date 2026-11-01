@@ -28,6 +28,8 @@ import { eventRepository, PlanIndexEntry } from './storage/eventRepository';
 import { aiService, GeneratePlanRequestParams } from './services/aiService';
 import { calculateDateBeforeEvent } from './utils/timeline';
 import { toMinorUnits } from './utils/currency';
+import { isRecord } from './types/api';
+import { toPriorityLevel, toPaymentStatus, toBookingStatus, toRiskCategory, toRiskSeverity, toRiskProbability } from './utils/validation';
 
 export default function App() {
   const [currentPlan, setCurrentPlan] = useState<EventPlan | null>(null);
@@ -165,9 +167,10 @@ export default function App() {
       } else {
         addToast('success', 'Master Plan Generated', `Successfully created ${freshPlan.eventDetails.name}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Generation error:', err);
-      addToast('error', 'Generation Error', err?.message || 'Could not connect to AI service');
+      const msg = err instanceof Error ? err.message : 'Could not connect to AI service';
+      addToast('error', 'Generation Error', msg);
     } finally {
       setIsLoading(false);
     }
@@ -256,77 +259,142 @@ export default function App() {
     try {
       const updatedSectionData = await aiService.regenerateSection(sectionName, currentPlan, constraints);
       let updatedPlan = { ...currentPlan };
+      const rawSection = isRecord(updatedSectionData) ? updatedSectionData : {};
 
       if (sectionName === 'budget') {
-        const items = Array.isArray(updatedSectionData?.items) ? updatedSectionData.items : updatedPlan.budget.items;
+        const rawItems = Array.isArray(rawSection.items) ? rawSection.items : updatedPlan.budget.items;
         updatedPlan = {
           ...updatedPlan,
           budget: {
             ...updatedPlan.budget,
-            items: items.map((b: any, idx: number) => ({
-              id: b.id || `bgt_ai_${idx}`,
-              category: b.category || 'General',
-              description: b.description || 'Budget line item',
-              estimatedAmountMinor: typeof b.estimatedAmountMajor === 'number'
+            items: rawItems.map((bRaw: unknown, idx: number) => {
+              const b = isRecord(bRaw) ? bRaw : {};
+              const id = typeof b.id === 'string' && b.id ? b.id : `bgt_ai_${idx}`;
+              const category = typeof b.category === 'string' && b.category ? b.category : 'General';
+              const description = typeof b.description === 'string' && b.description ? b.description : 'Budget line item';
+              const estimatedAmountMinor = typeof b.estimatedAmountMajor === 'number'
                 ? toMinorUnits(b.estimatedAmountMajor, currentPlan.budget.currency)
-                : b.estimatedAmountMinor || 100000,
-              actualAmountMinor: b.actualAmountMinor || 0,
-              quantity: b.quantity || 1,
-              unitCostMinor: b.unitCostMinor || 100000,
-              priority: b.priority || 'medium',
-              paymentStatus: b.paymentStatus || 'unpaid',
-              notes: b.notes || '',
-              isAiEstimated: true,
-            })),
+                : typeof b.estimatedAmountMinor === 'number'
+                ? b.estimatedAmountMinor
+                : 100000;
+              const actualAmountMinor = typeof b.actualAmountMinor === 'number' ? b.actualAmountMinor : 0;
+              const quantity = typeof b.quantity === 'number' && b.quantity > 0 ? b.quantity : 1;
+              const unitCostMinor = typeof b.unitCostMinor === 'number' ? b.unitCostMinor : estimatedAmountMinor;
+              const priority = toPriorityLevel(b.priority);
+              const paymentStatus = toPaymentStatus(b.paymentStatus);
+              const notes = typeof b.notes === 'string' ? b.notes : '';
+
+              return {
+                id,
+                category,
+                description,
+                estimatedAmountMinor,
+                actualAmountMinor,
+                quantity,
+                unitCostMinor,
+                priority,
+                paymentStatus,
+                notes,
+                isAiEstimated: true,
+              };
+            }),
           },
         };
       } else if (sectionName === 'timeline') {
-        const tasks = Array.isArray(updatedSectionData?.tasks) ? updatedSectionData.tasks : updatedPlan.timeline.tasks;
+        const rawTasks = Array.isArray(rawSection.tasks) ? rawSection.tasks : updatedPlan.timeline.tasks;
         updatedPlan = {
           ...updatedPlan,
           timeline: {
-            tasks: tasks.map((t: any, idx: number) => ({
-              id: t.id || `tsk_ai_${idx}`,
-              title: t.title || 'Task',
-              description: t.description || '',
-              category: t.category || 'Planning',
-              dueDate: t.dueDate || calculateDateBeforeEvent(currentPlan.eventDetails.targetDate, t.daysBeforeEvent || 14),
-              daysBeforeEvent: t.daysBeforeEvent || 14,
-              priority: t.priority || 'medium',
-              status: t.status || 'todo',
-              dependencies: t.dependencies || [],
-              notes: t.notes || '',
-              isAiGenerated: true,
-            })),
+            tasks: rawTasks.map((tRaw: unknown, idx: number) => {
+              const t = isRecord(tRaw) ? tRaw : {};
+              const id = typeof t.id === 'string' && t.id ? t.id : `tsk_ai_${idx}`;
+              const title = typeof t.title === 'string' && t.title ? t.title : 'Task';
+              const description = typeof t.description === 'string' ? t.description : '';
+              const category = typeof t.category === 'string' && t.category ? t.category : 'Planning';
+              const daysBeforeEvent = typeof t.daysBeforeEvent === 'number' ? t.daysBeforeEvent : 14;
+              const dueDate = typeof t.dueDate === 'string' && t.dueDate
+                ? t.dueDate
+                : calculateDateBeforeEvent(currentPlan.eventDetails.targetDate, daysBeforeEvent);
+              const priority = toPriorityLevel(t.priority);
+              const status = t.status === 'completed' || t.status === 'in_progress' ? t.status : 'todo';
+              const dependencies = Array.isArray(t.dependencies) ? t.dependencies.filter((d): d is string => typeof d === 'string') : [];
+              const notes = typeof t.notes === 'string' ? t.notes : '';
+
+              return {
+                id,
+                title,
+                description,
+                category,
+                dueDate,
+                daysBeforeEvent,
+                priority,
+                status,
+                dependencies,
+                notes,
+                isAiGenerated: true,
+              };
+            }),
           },
         };
       } else if (sectionName === 'vendors') {
-        const items = Array.isArray(updatedSectionData?.items) ? updatedSectionData.items : updatedPlan.vendors.items;
+        const rawItems = Array.isArray(rawSection.items) ? rawSection.items : updatedPlan.vendors.items;
         updatedPlan = {
           ...updatedPlan,
-          vendors: { items },
-        };
-      } else if (sectionName === 'ideas') {
-        updatedPlan = {
-          ...updatedPlan,
-          ideas: {
-            ...updatedPlan.ideas,
-            ...updatedSectionData,
+          vendors: {
+            items: rawItems.map((vRaw: unknown, idx: number) => {
+              const v = isRecord(vRaw) ? vRaw : {};
+              return {
+                id: typeof v.id === 'string' && v.id ? v.id : `vnd_ai_${idx}`,
+                category: typeof v.category === 'string' ? v.category : 'General',
+                title: typeof v.title === 'string' ? v.title : 'Vendor',
+                selectionGuidance: typeof v.selectionGuidance === 'string' ? v.selectionGuidance : '',
+                estimatedCostMinor: typeof v.estimatedCostMinor === 'number' ? v.estimatedCostMinor : 100000,
+                targetBookingDate: typeof v.targetBookingDate === 'string' ? v.targetBookingDate : currentPlan.eventDetails.targetDate,
+                bookingStatus: toBookingStatus(v.bookingStatus),
+                selectionCriteria: Array.isArray(v.selectionCriteria) ? v.selectionCriteria.filter((c): c is string => typeof c === 'string') : [],
+                notes: typeof v.notes === 'string' ? v.notes : '',
+              };
+            }),
           },
         };
+      } else if (sectionName === 'ideas') {
+        if (isRecord(updatedSectionData)) {
+          updatedPlan = {
+            ...updatedPlan,
+            ideas: {
+              ...updatedPlan.ideas,
+              ...(updatedSectionData as Partial<typeof updatedPlan.ideas>),
+            },
+          };
+        }
       } else if (sectionName === 'risks') {
-        const items = Array.isArray(updatedSectionData?.items) ? updatedSectionData.items : updatedPlan.risks.items;
+        const rawItems = Array.isArray(rawSection.items) ? rawSection.items : updatedPlan.risks.items;
         updatedPlan = {
           ...updatedPlan,
-          risks: { items },
+          risks: {
+            items: rawItems.map((rRaw: unknown, idx: number) => {
+              const r = isRecord(rRaw) ? rRaw : {};
+              return {
+                id: typeof r.id === 'string' && r.id ? r.id : `rsk_ai_${idx}`,
+                category: toRiskCategory(r.category),
+                title: typeof r.title === 'string' ? r.title : 'Risk factor',
+                severity: toRiskSeverity(r.severity),
+                probability: toRiskProbability(r.probability),
+                mitigation: typeof r.mitigation === 'string' ? r.mitigation : '',
+                contingencyAction: typeof r.contingencyAction === 'string' ? r.contingencyAction : '',
+                isResolved: Boolean(r.isResolved),
+              };
+            }),
+          },
         };
       }
 
       handleUpdatePlan(updatedPlan, true);
       addToast('success', 'Section Updated', `Re-optimized ${sectionName} based on your new constraints.`);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Section update failed:', err);
-      addToast('error', 'Optimization Failed', err?.message || 'Failed to update section');
+      const msg = err instanceof Error ? err.message : 'Failed to update section';
+      addToast('error', 'Optimization Failed', msg);
     } finally {
       setIsLoading(false);
     }

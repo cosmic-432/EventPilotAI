@@ -49,6 +49,7 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
         return (
           <div
             key={toast.id}
+            role="status"
             className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl bg-white border shadow-xl transition-all duration-200 ${border}`}
           >
             <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${iconColor}`} />
